@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password — Basic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 400px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #22c55e;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 700; color: #000;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; line-height: 1.5; }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #22c55e; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #22c55e;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error.show { display: block; }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 14px;
+            color: #22c55e;
+            font-size: 0.85rem;
+            display: none;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .success.show { display: block; }
+
+        .back-link {
+            text-align: center; margin-top: 20px;
+            font-size: 0.85rem; color: #737373;
+        }
+
+        .back-link a { color: #22c55e; text-decoration: none; }
+        .back-link a:hover { text-decoration: underline; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">B</div>
+                <h1>Forgot Password</h1>
+                <p>Enter your email and we'll send you a reset link.</p>
+            </div>
+
+            <form class="form" id="forgotForm">
+                <div class="error" id="error"></div>
+                <div class="success" id="success"></div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" autofocus>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Send Reset Link</button>
+            </form>
+
+            <div class="back-link">
+                <a href="login.html">Back to login</a>
+            </div>
+
+            <div class="tier-badge"><span>Tier 1 — Basic</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 1 — BASIC FORGOT PASSWORD
+         *
+         * Features:
+         * - Email input → POST to server
+         * - Always shows success message (doesn't reveal if email exists)
+         *
+         * Server: POST /api/auth/forgot-password → { email }
+         *         Always returns 200 (prevents user enumeration)
+         *
+         * TODO: Set API_BASE below.
+         */
+
+        const API_BASE = '/api';
+
+        const form = document.getElementById('forgotForm');
+        const errorEl = document.getElementById('error');
+        const successEl = document.getElementById('success');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            const email = document.getElementById('email').value.trim();
+            if (!email) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+
+            try {
+                await fetch(`${API_BASE}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                // Always show success (prevents email enumeration)
+                successEl.textContent = 'If an account with that email exists, we sent a password reset link. Check your inbox.';
+                successEl.classList.add('show');
+                form.querySelector('.form-group').style.display = 'none';
+                submitBtn.style.display = 'none';
+            } catch (err) {
+                errorEl.textContent = 'Connection error. Try again.';
+                errorEl.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Reset Link';
+            }
+        });
+    </script>
+</body>
+</html>

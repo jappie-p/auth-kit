@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — Medium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 400px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #3b82f6;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 700; color: #fff;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #3b82f6; }
+        .form-group input::placeholder { color: #525252; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error.show { display: block; }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #22c55e;
+            font-size: 0.85rem;
+            display: none;
+            text-align: center;
+        }
+
+        .success.show { display: block; }
+
+        /* Password strength */
+        .strength-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: #262626;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .strength-bar .fill {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .password-reqs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            margin-top: 4px;
+        }
+
+        .password-reqs .req {
+            font-size: 0.7rem;
+            color: #525252;
+            transition: color 0.2s;
+        }
+
+        .password-reqs .req.met { color: #22c55e; }
+
+        /* Match indicator */
+        .match-indicator {
+            font-size: 0.75rem;
+            margin-top: 2px;
+            display: none;
+        }
+
+        .match-indicator.show { display: block; }
+        .match-indicator.match { color: #22c55e; }
+        .match-indicator.no-match { color: #ef4444; }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #737373;
+        }
+
+        .login-link a { color: #3b82f6; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">M</div>
+                <h1>Create Account</h1>
+                <p>Standard registration</p>
+            </div>
+
+            <form class="form" id="registerForm">
+                <div class="error" id="error"></div>
+                <div class="success" id="success"></div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username"
+                           maxlength="30" placeholder="3-30 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password" maxlength="128">
+                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                    <div class="password-reqs">
+                        <span class="req" id="req-len">8+ chars</span>
+                        <span class="req" id="req-upper">Uppercase</span>
+                        <span class="req" id="req-lower">Lowercase</span>
+                        <span class="req" id="req-num">Number</span>
+                        <span class="req" id="req-special">Special</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="match-indicator" id="matchIndicator"></div>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Create Account</button>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="login.html">Sign in</a>
+            </div>
+
+            <div class="tier-badge"><span>Tier 2 — Medium</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 2 — MEDIUM REGISTRATION
+         *
+         * Features:
+         * - Confirm password with live match indicator
+         * - Password strength bar + requirements checklist
+         * - Input sanitization (username chars, lengths)
+         * - Client-side validation before submit
+         * - Handles 409 (username/email taken) and 429 (rate limit)
+         *
+         * Server: POST /api/auth/register → { username, email, password }
+         *         Returns { user } or { error }
+         *         409 = username/email already taken
+         *
+         * TODO: Set API_BASE and LOGIN_URL below.
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = 'login.html';
+
+        const form = document.getElementById('registerForm');
+        const errorEl = document.getElementById('error');
+        const successEl = document.getElementById('success');
+        const submitBtn = document.getElementById('submitBtn');
+        const strengthFill = document.getElementById('strengthFill');
+        const matchIndicator = document.getElementById('matchIndicator');
+
+        function showError(msg) {
+            errorEl.textContent = msg;
+            errorEl.classList.add('show');
+            successEl.classList.remove('show');
+        }
+
+        function showSuccess(msg) {
+            successEl.textContent = msg;
+            successEl.classList.add('show');
+            errorEl.classList.remove('show');
+        }
+
+        // Password strength
+        const reqs = {
+            len: (v) => v.length >= 8,
+            upper: (v) => /[A-Z]/.test(v),
+            lower: (v) => /[a-z]/.test(v),
+            num: (v) => /\d/.test(v),
+            special: (v) => /[^A-Za-z0-9]/.test(v)
+        };
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+
+            Object.entries(reqs).forEach(([key, fn]) => {
+                const met = fn(val);
+                if (met) score++;
+                document.getElementById(`req-${key}`).classList.toggle('met', met);
+            });
+
+            const pct = val.length === 0 ? 0 : Math.min(score / 5 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#22c55e'];
+            strengthFill.style.width = pct + '%';
+            strengthFill.style.background = colors[Math.min(score, 4)] || '#262626';
+
+            updateMatch();
+        });
+
+        // Confirm password match
+        function updateMatch() {
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (!confirm) {
+                matchIndicator.classList.remove('show');
+                return;
+            }
+
+            matchIndicator.classList.add('show');
+            if (pass === confirm) {
+                matchIndicator.textContent = 'Passwords match';
+                matchIndicator.classList.add('match');
+                matchIndicator.classList.remove('no-match');
+            } else {
+                matchIndicator.textContent = 'Passwords do not match';
+                matchIndicator.classList.add('no-match');
+                matchIndicator.classList.remove('match');
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('input', updateMatch);
+
+        // Submit
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorEl.classList.remove('show');
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (!username || !email || !password || !confirmPassword) {
+                showError('All fields are required.');
+                return;
+            }
+
+            if (username.length < 3 || username.length > 30) {
+                showError('Username must be 3-30 characters.');
+                return;
+            }
+
+            if (/[<>'\";&|]/.test(username)) {
+                showError('Username contains invalid characters.');
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('Please enter a valid email address.');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError('Password must be at least 8 characters.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('Passwords do not match.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.status === 409) {
+                    showError(data.error || 'Username or email already taken.');
+                    return;
+                }
+
+                if (res.status === 429) {
+                    showError('Too many attempts. Please wait and try again.');
+                    return;
+                }
+
+                if (!res.ok) {
+                    showError(data.error || 'Registration failed.');
+                    return;
+                }
+
+                showSuccess('Account created! Redirecting to login...');
+                form.reset();
+                strengthFill.style.width = '0';
+                matchIndicator.classList.remove('show');
+                document.querySelectorAll('.req').forEach(r => r.classList.remove('met'));
+                setTimeout(() => { window.location.href = LOGIN_URL; }, 2000);
+            } catch (err) {
+                showError('Connection error. Try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — Super</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 420px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #ef4444;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 700; color: #fff;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; }
+
+        .step-indicator {
+            display: flex; justify-content: center; gap: 8px; margin-bottom: 24px;
+        }
+
+        .step-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #262626; transition: background 0.3s;
+        }
+
+        .step-dot.active { background: #ef4444; }
+        .step-dot.done { background: #22c55e; }
+
+        .step-label {
+            text-align: center; font-size: 0.75rem;
+            color: #525252; margin-bottom: 16px;
+        }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #ef4444; }
+        .form-group input::placeholder { color: #525252; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #262626;
+            color: #a3a3a3;
+        }
+
+        .btn-secondary:hover { border-color: #404040; }
+
+        .error, .success, .info {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; text-align: center; }
+        .info { background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6; color: #3b82f6; text-align: center; line-height: 1.5; }
+        .error.show, .success.show, .info.show { display: block; }
+
+        .strength-bar { height: 3px; border-radius: 2px; background: #262626; margin-top: 4px; overflow: hidden; }
+        .strength-bar .fill { height: 100%; width: 0; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+
+        .password-reqs { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 4px; }
+        .password-reqs .req { font-size: 0.7rem; color: #525252; transition: color 0.2s; }
+        .password-reqs .req.met { color: #22c55e; }
+
+        .match-indicator { font-size: 0.75rem; margin-top: 2px; display: none; }
+        .match-indicator.show { display: block; }
+        .match-indicator.match { color: #22c55e; }
+        .match-indicator.no-match { color: #ef4444; }
+
+        .terms-group {
+            display: flex; align-items: flex-start; gap: 10px;
+            font-size: 0.8rem; color: #a3a3a3; line-height: 1.5;
+        }
+
+        .terms-group input[type="checkbox"] {
+            accent-color: #ef4444; width: 16px; height: 16px;
+            margin-top: 2px; flex-shrink: 0;
+        }
+
+        .terms-group a { color: #ef4444; text-decoration: none; }
+        .terms-group a:hover { text-decoration: underline; }
+
+        .verify-input {
+            text-align: center; font-size: 1.4rem !important;
+            letter-spacing: 0.4em; font-variant-numeric: tabular-nums;
+        }
+
+        .resend-link { text-align: center; font-size: 0.8rem; color: #737373; }
+        .resend-link a { color: #ef4444; text-decoration: none; cursor: pointer; }
+        .resend-link a:hover { text-decoration: underline; }
+        .resend-link a.disabled { color: #525252; pointer-events: none; }
+
+        /* 2FA Setup */
+        .qr-container { text-align: center; margin: 16px 0; }
+        .qr-container img { border-radius: 8px; background: #fff; padding: 8px; max-width: 200px; }
+
+        .manual-key {
+            background: #0a0a0a; border: 1px solid #262626;
+            border-radius: 8px; padding: 10px 14px;
+            text-align: center; font-size: 0.8rem;
+            color: #a3a3a3; word-break: break-all; margin-bottom: 8px;
+        }
+
+        .manual-key strong {
+            color: #fafafa; display: block; margin-bottom: 4px;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .backup-codes {
+            background: #0a0a0a; border: 1px solid #262626;
+            border-radius: 8px; padding: 14px;
+            margin: 8px 0;
+        }
+
+        .backup-codes h3 {
+            font-size: 0.8rem; color: #fafafa;
+            margin-bottom: 8px; font-weight: 600;
+        }
+
+        .backup-codes .codes {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 4px 16px; font-family: 'Geist', monospace;
+            font-size: 0.85rem; color: #a3a3a3;
+        }
+
+        .backup-codes .warning {
+            font-size: 0.7rem; color: #f59e0b;
+            margin-top: 8px; line-height: 1.4;
+        }
+
+        .login-link {
+            text-align: center; margin-top: 20px;
+            font-size: 0.85rem; color: #737373;
+        }
+
+        .login-link a { color: #ef4444; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">HQ</div>
+                <h1>Create Account</h1>
+                <p>Maximum security registration</p>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1"></div>
+                <div class="step-dot" id="dot2"></div>
+                <div class="step-dot" id="dot3"></div>
+            </div>
+
+            <div class="step-label" id="stepLabel">Step 1 of 3 — Account details</div>
+
+            <!-- Step 1: Invite code + Registration -->
+            <form class="form" id="registerForm">
+                <div class="error" id="error"></div>
+
+                <div class="form-group">
+                    <label for="inviteCode">Invite Code</label>
+                    <input type="text" id="inviteCode" name="inviteCode" required
+                           placeholder="Required — get one from an admin" maxlength="32"
+                           style="text-transform: uppercase;">
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username"
+                           maxlength="30" placeholder="3-30 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password" maxlength="128">
+                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                    <div class="password-reqs">
+                        <span class="req" id="req-len">8+ chars</span>
+                        <span class="req" id="req-upper">Uppercase</span>
+                        <span class="req" id="req-lower">Lowercase</span>
+                        <span class="req" id="req-num">Number</span>
+                        <span class="req" id="req-special">Special</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="match-indicator" id="matchIndicator"></div>
+                </div>
+
+                <!-- Honeypot -->
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                    <input type="text" name="company_name" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="terms-group">
+                    <input type="checkbox" id="terms" required>
+                    <label for="terms">
+                        I agree to the <a href="/terms" target="_blank">Terms of Service</a>
+                        and <a href="/privacy" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Continue</button>
+            </form>
+
+            <!-- Step 2: Email verification -->
+            <form class="form" id="verifyForm" style="display: none;">
+                <div class="error" id="verifyError"></div>
+
+                <p style="text-align: center; color: #a3a3a3; font-size: 0.85rem; line-height: 1.5;">
+                    Verification code sent to<br>
+                    <strong id="sentToEmail" style="color: #fafafa;"></strong>
+                </p>
+
+                <div class="form-group">
+                    <label for="verifyCode">Verification Code</label>
+                    <input type="text" id="verifyCode" name="verifyCode" required
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="verify-input">
+                </div>
+
+                <button type="submit" class="btn" id="verifyBtn">Verify Email</button>
+
+                <div class="resend-link">
+                    <a href="#" id="resendLink">Resend code</a>
+                </div>
+            </form>
+
+            <!-- Step 3: Mandatory 2FA setup -->
+            <div class="form" id="setup2fa" style="display: none;">
+                <div class="info show">
+                    2FA is mandatory. Set up your authenticator app to complete registration.
+                </div>
+
+                <div class="qr-container" id="qrContainer"></div>
+
+                <div class="manual-key" id="manualKey">
+                    <strong>Manual key</strong>
+                    <span id="manualKeyValue"></span>
+                </div>
+
+                <form class="form" id="confirm2faForm">
+                    <div class="error" id="setup2faError"></div>
+
+                    <div class="form-group">
+                        <label for="confirmCode">Authenticator Code</label>
+                        <input type="text" id="confirmCode" name="confirmCode" required
+                               autocomplete="one-time-code" placeholder="000000"
+                               maxlength="6" pattern="[0-9]{6}"
+                               inputmode="numeric" class="verify-input">
+                    </div>
+
+                    <button type="submit" class="btn" id="confirm2faBtn">Complete Registration</button>
+                </form>
+
+                <!-- Backup codes (shown after 2FA confirmed) -->
+                <div class="backup-codes" id="backupCodes" style="display: none;">
+                    <h3>Backup Codes</h3>
+                    <div class="codes" id="backupCodeList"></div>
+                    <div class="warning">
+                        Save these codes somewhere safe. Each can only be used once.
+                        You will not be able to see them again.
+                    </div>
+                </div>
+
+                <div class="success" id="setupSuccess"></div>
+            </div>
+
+            <div class="login-link">
+                Already have an account? <a href="login.html">Sign in</a>
+            </div>
+
+            <div class="tier-badge"><span>Tier 4 — Super</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 4 — SUPER REGISTRATION
+         *
+         * Features:
+         * - 3-step flow: Invite + Register → Email verify → Mandatory 2FA setup
+         * - Invite code required (admin-issued)
+         * - Password strength + confirm password
+         * - Honeypots (bot trap)
+         * - Terms checkbox
+         * - Email verification with resend cooldown
+         * - Mandatory 2FA setup with QR code + manual key
+         * - Backup codes displayed after 2FA confirmation
+         * - noindex/nofollow
+         * - All input sanitized
+         *
+         * Server endpoints:
+         * - POST /api/auth/register        → { invite_code, username, email, password }
+         *   Returns { temp_token } — sends verification email
+         * - POST /api/auth/verify-email     → { temp_token, code }
+         *   Returns { user_token } — email confirmed
+         * - POST /api/auth/resend-verify    → { temp_token }
+         * - POST /api/auth/setup-2fa        → headers: Authorization: Bearer <user_token>
+         *   Returns { qr_url, manual_key, pending_secret }
+         * - POST /api/auth/confirm-2fa      → { pending_secret, code }
+         *   Returns { backup_codes: [...], user }
+         *
+         * TODO: Set API_BASE and LOGIN_URL below.
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = 'login.html';
+
+        let tempToken = null;
+        let userToken = null;
+        let pendingSecret = null;
+        let resendCooldown = 0;
+
+        // ─── Password strength ───
+
+        const reqs = {
+            len: (v) => v.length >= 8,
+            upper: (v) => /[A-Z]/.test(v),
+            lower: (v) => /[a-z]/.test(v),
+            num: (v) => /\d/.test(v),
+            special: (v) => /[^A-Za-z0-9]/.test(v)
+        };
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+            Object.entries(reqs).forEach(([key, fn]) => {
+                const met = fn(val);
+                if (met) score++;
+                document.getElementById(`req-${key}`).classList.toggle('met', met);
+            });
+            const pct = val.length === 0 ? 0 : Math.min(score / 5 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#22c55e'];
+            document.getElementById('strengthFill').style.width = pct + '%';
+            document.getElementById('strengthFill').style.background = colors[Math.min(score, 4)] || '#262626';
+            updateMatch();
+        });
+
+        function updateMatch() {
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const el = document.getElementById('matchIndicator');
+            if (!confirm) { el.classList.remove('show'); return; }
+            el.classList.add('show');
+            if (pass === confirm) {
+                el.textContent = 'Passwords match';
+                el.className = 'match-indicator show match';
+            } else {
+                el.textContent = 'Passwords do not match';
+                el.className = 'match-indicator show no-match';
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('input', updateMatch);
+
+        // ─── Helpers ───
+
+        function showError(elId, msg) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function hideError(elId) {
+            document.getElementById(elId).classList.remove('show');
+        }
+
+        function clearChildren(el) {
+            while (el.firstChild) el.removeChild(el.firstChild);
+        }
+
+        function goToStep(step) {
+            document.getElementById('registerForm').style.display = step === 1 ? 'flex' : 'none';
+            document.getElementById('verifyForm').style.display = step === 2 ? 'flex' : 'none';
+            document.getElementById('setup2fa').style.display = step === 3 ? 'flex' : 'none';
+
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                dot.className = 'step-dot' + (i < step ? ' done' : i === step ? ' active' : '');
+            }
+
+            const labels = [
+                'Step 1 of 3 — Account details',
+                'Step 2 of 3 — Email verification',
+                'Step 3 of 3 — Set up 2FA'
+            ];
+            document.getElementById('stepLabel').textContent = labels[step - 1];
+        }
+
+        // ─── Step 1: Register with invite ───
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('error');
+
+            const inviteCode = document.getElementById('inviteCode').value.trim().toUpperCase();
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!inviteCode) { showError('error', 'Invite code is required.'); return; }
+            if (!username || !email || !password || !confirmPassword) { showError('error', 'All fields are required.'); return; }
+            if (username.length < 3 || username.length > 30) { showError('error', 'Username must be 3-30 characters.'); return; }
+            if (/[<>'\";&|]/.test(username)) { showError('error', 'Username contains invalid characters.'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('error', 'Enter a valid email address.'); return; }
+            if (password.length < 8) { showError('error', 'Password must be at least 8 characters.'); return; }
+            if (password !== confirmPassword) { showError('error', 'Passwords do not match.'); return; }
+            if (!terms) { showError('error', 'You must agree to the Terms.'); return; }
+
+            // Check honeypots
+            const honeypots = document.querySelectorAll('input[name="website"], input[name="company_name"]');
+            for (const hp of honeypots) {
+                if (hp.value) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    showError('error', 'Registration failed.');
+                    return;
+                }
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Validating...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ invite_code: inviteCode, username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('error', data.error || 'Registration failed.');
+                    return;
+                }
+
+                tempToken = data.temp_token;
+                document.getElementById('sentToEmail').textContent = email;
+                goToStep(2);
+                document.getElementById('verifyCode').focus();
+            } catch (err) {
+                showError('error', 'Connection error. Try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Continue';
+            }
+        });
+
+        // ─── Step 2: Verify email ───
+
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('verifyError');
+
+            const code = document.getElementById('verifyCode').value.trim();
+            const btn = document.getElementById('verifyBtn');
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('verifyError', 'Enter a valid 6-digit code.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken, code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('verifyError', data.error || 'Invalid code.');
+                    document.getElementById('verifyCode').value = '';
+                    document.getElementById('verifyCode').focus();
+                    return;
+                }
+
+                userToken = data.user_token;
+                await start2faSetup();
+                goToStep(3);
+            } catch (err) {
+                showError('verifyError', 'Connection error. Try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify Email';
+            }
+        });
+
+        // Resend code
+        document.getElementById('resendLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const link = e.target;
+            if (resendCooldown > 0) return;
+            link.classList.add('disabled');
+
+            try {
+                await fetch(`${API_BASE}/auth/resend-verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken })
+                });
+            } catch { /* ignore */ }
+
+            resendCooldown = 60;
+            const timer = setInterval(() => {
+                resendCooldown--;
+                if (resendCooldown <= 0) {
+                    clearInterval(timer);
+                    link.textContent = 'Resend code';
+                    link.classList.remove('disabled');
+                } else {
+                    link.textContent = `Resend code (${resendCooldown}s)`;
+                }
+            }, 1000);
+            link.textContent = `Resend code (${resendCooldown}s)`;
+        });
+
+        // ─── Step 3: 2FA setup ───
+
+        async function start2faSetup() {
+            try {
+                const res = await fetch(`${API_BASE}/auth/setup-2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('setup2faError', data.error || '2FA setup failed.');
+                    return;
+                }
+
+                pendingSecret = data.pending_secret;
+
+                clearChildren(document.getElementById('qrContainer'));
+                if (data.qr_url) {
+                    const img = document.createElement('img');
+                    img.src = data.qr_url;
+                    img.alt = 'QR Code';
+                    document.getElementById('qrContainer').appendChild(img);
+                }
+
+                document.getElementById('manualKeyValue').textContent = data.manual_key || '';
+                document.getElementById('confirmCode').focus();
+            } catch (err) {
+                showError('setup2faError', 'Connection error during 2FA setup.');
+            }
+        }
+
+        document.getElementById('confirm2faForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('setup2faError');
+
+            const code = document.getElementById('confirmCode').value.trim();
+            const btn = document.getElementById('confirm2faBtn');
+
+            if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('setup2faError', 'Enter the 6-digit code from your authenticator.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Confirming...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/confirm-2fa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ pendingSecret, code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('setup2faError', data.error || 'Invalid code. Try again.');
+                    document.getElementById('confirmCode').value = '';
+                    document.getElementById('confirmCode').focus();
+                    return;
+                }
+
+                // Show backup codes
+                if (data.backup_codes && data.backup_codes.length > 0) {
+                    const codeList = document.getElementById('backupCodeList');
+                    clearChildren(codeList);
+                    data.backup_codes.forEach(c => {
+                        const span = document.createElement('span');
+                        span.textContent = c;
+                        codeList.appendChild(span);
+                    });
+                    document.getElementById('backupCodes').style.display = 'block';
+                }
+
+                // Hide setup form, show success
+                document.getElementById('confirm2faForm').style.display = 'none';
+                clearChildren(document.getElementById('qrContainer'));
+                document.getElementById('manualKey').style.display = 'none';
+
+                const successEl = document.getElementById('setupSuccess');
+                successEl.textContent = 'Registration complete! Redirecting to login...';
+                successEl.classList.add('show');
+
+                document.getElementById('dot3').className = 'step-dot done';
+                document.getElementById('stepLabel').textContent = 'Registration complete';
+
+                setTimeout(() => { window.location.href = LOGIN_URL; }, 5000);
+            } catch (err) {
+                showError('setup2faError', 'Connection error. Try again.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Complete Registration';
+            }
+        });
+    </script>
+</body>
+</html>

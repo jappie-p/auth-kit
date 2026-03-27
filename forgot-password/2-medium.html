@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password — Medium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 400px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #3b82f6;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 700; color: #fff;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; line-height: 1.5; }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #3b82f6; }
+        .form-group input::placeholder { color: #525252; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .error, .success, .warning {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; text-align: center; line-height: 1.5; }
+        .warning { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; }
+        .error.show, .success.show, .warning.show { display: block; }
+
+        .countdown { font-weight: 600; }
+
+        .strength-bar {
+            height: 3px; border-radius: 2px;
+            background: #262626; margin-top: 4px; overflow: hidden;
+        }
+
+        .strength-bar .fill {
+            height: 100%; width: 0; border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .password-reqs {
+            display: flex; flex-wrap: wrap;
+            gap: 6px 12px; margin-top: 4px;
+        }
+
+        .password-reqs .req { font-size: 0.7rem; color: #525252; transition: color 0.2s; }
+        .password-reqs .req.met { color: #22c55e; }
+
+        .match-indicator { font-size: 0.75rem; margin-top: 2px; display: none; }
+        .match-indicator.show { display: block; }
+        .match-indicator.match { color: #22c55e; }
+        .match-indicator.no-match { color: #ef4444; }
+
+        .back-link {
+            text-align: center; margin-top: 20px;
+            font-size: 0.85rem; color: #737373;
+        }
+
+        .back-link a { color: #3b82f6; text-decoration: none; }
+        .back-link a:hover { text-decoration: underline; }
+
+        .resend-link { text-align: center; font-size: 0.8rem; color: #737373; }
+        .resend-link a { color: #3b82f6; text-decoration: none; cursor: pointer; }
+        .resend-link a:hover { text-decoration: underline; }
+        .resend-link a.disabled { color: #525252; pointer-events: none; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">M</div>
+                <h1>Reset Password</h1>
+                <p>Enter your email to receive a reset code.</p>
+            </div>
+
+            <!-- Step 1: Request reset -->
+            <form class="form" id="requestForm">
+                <div class="error" id="requestError"></div>
+                <div class="warning" id="requestWarning"></div>
+                <div class="success" id="requestSuccess"></div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" autofocus maxlength="100">
+                </div>
+
+                <button type="submit" class="btn" id="requestBtn">Send Reset Code</button>
+            </form>
+
+            <!-- Step 2: Enter code + new password -->
+            <form class="form" id="resetForm" style="display: none;">
+                <div class="error" id="resetError"></div>
+                <div class="success" id="resetSuccess"></div>
+
+                <p style="text-align: center; color: #a3a3a3; font-size: 0.85rem; line-height: 1.5;">
+                    Code sent to <strong id="sentToEmail" style="color: #fafafa;"></strong>
+                </p>
+
+                <div class="form-group">
+                    <label for="resetCode">Reset Code</label>
+                    <input type="text" id="resetCode" name="resetCode" required
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric"
+                           style="text-align: center; font-size: 1.4rem; letter-spacing: 0.4em;">
+                </div>
+
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                    <div class="password-reqs">
+                        <span class="req" id="req-len">8+ chars</span>
+                        <span class="req" id="req-upper">Uppercase</span>
+                        <span class="req" id="req-lower">Lowercase</span>
+                        <span class="req" id="req-num">Number</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="match-indicator" id="matchIndicator"></div>
+                </div>
+
+                <button type="submit" class="btn" id="resetBtn">Reset Password</button>
+
+                <div class="resend-link">
+                    <a href="#" id="resendLink">Resend code</a>
+                </div>
+            </form>
+
+            <div class="back-link">
+                <a href="login.html">Back to login</a>
+            </div>
+
+            <div class="tier-badge"><span>Tier 2 — Medium</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 2 — MEDIUM FORGOT PASSWORD
+         *
+         * Features:
+         * - 2-step: Request code → Enter code + new password
+         * - Rate limit handling (429 with countdown)
+         * - Password strength bar + requirements
+         * - Confirm password match
+         * - Resend code with 60s cooldown
+         * - Input validation + sanitization
+         * - No email enumeration (always shows success)
+         *
+         * Server endpoints:
+         * - POST /api/auth/forgot-password    → { email }
+         *   Always returns 200 (sends code if email exists)
+         * - POST /api/auth/reset-password     → { email, code, new_password }
+         *   Returns 200 on success, 400 on invalid code
+         * - 429 with { retry_after }
+         *
+         * TODO: Set API_BASE below.
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = 'login.html';
+
+        let currentEmail = '';
+        let resendCooldown = 0;
+        let requestCount = 0;
+
+        // ─── Password strength ───
+
+        const reqs = {
+            len: (v) => v.length >= 8,
+            upper: (v) => /[A-Z]/.test(v),
+            lower: (v) => /[a-z]/.test(v),
+            num: (v) => /\d/.test(v)
+        };
+
+        document.getElementById('newPassword').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+            Object.entries(reqs).forEach(([key, fn]) => {
+                const met = fn(val);
+                if (met) score++;
+                document.getElementById(`req-${key}`).classList.toggle('met', met);
+            });
+            const pct = val.length === 0 ? 0 : Math.min(score / 4 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#22c55e', '#22c55e'];
+            document.getElementById('strengthFill').style.width = pct + '%';
+            document.getElementById('strengthFill').style.background = colors[Math.min(score - 1, 3)] || '#262626';
+            updateMatch();
+        });
+
+        function updateMatch() {
+            const pass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const el = document.getElementById('matchIndicator');
+            if (!confirm) { el.classList.remove('show'); return; }
+            el.classList.add('show');
+            if (pass === confirm) {
+                el.textContent = 'Passwords match';
+                el.className = 'match-indicator show match';
+            } else {
+                el.textContent = 'Passwords do not match';
+                el.className = 'match-indicator show no-match';
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('input', updateMatch);
+
+        // ─── Step 1: Request reset ───
+
+        document.getElementById('requestForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('requestError');
+            const warningEl = document.getElementById('requestWarning');
+            const successEl = document.getElementById('requestSuccess');
+            const btn = document.getElementById('requestBtn');
+            errorEl.classList.remove('show');
+            warningEl.classList.remove('show');
+            successEl.classList.remove('show');
+
+            const email = document.getElementById('email').value.trim();
+            if (!email) return;
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                errorEl.textContent = 'Enter a valid email address.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (res.status === 429) {
+                    const data = await res.json().catch(() => ({}));
+                    const seconds = data.retry_after || 60;
+                    warningEl.innerHTML = `Too many requests. Try again in <span class="countdown">${seconds}s</span>`;
+                    warningEl.classList.add('show');
+
+                    let remaining = seconds;
+                    const timer = setInterval(() => {
+                        remaining--;
+                        if (remaining <= 0) {
+                            clearInterval(timer);
+                            warningEl.classList.remove('show');
+                            btn.disabled = false;
+                            btn.textContent = 'Send Reset Code';
+                        } else {
+                            warningEl.innerHTML = `Too many requests. Try again in <span class="countdown">${remaining}s</span>`;
+                        }
+                    }, 1000);
+                    return;
+                }
+
+                // Always show success (prevents enumeration)
+                currentEmail = email;
+                document.getElementById('sentToEmail').textContent = email;
+                document.getElementById('requestForm').style.display = 'none';
+                document.getElementById('resetForm').style.display = 'flex';
+                document.getElementById('resetCode').focus();
+            } catch (err) {
+                errorEl.textContent = 'Connection error. Try again.';
+                errorEl.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Send Reset Code';
+            }
+        });
+
+        // ─── Step 2: Reset password ───
+
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('resetError');
+            const successEl = document.getElementById('resetSuccess');
+            const btn = document.getElementById('resetBtn');
+            errorEl.classList.remove('show');
+
+            const code = document.getElementById('resetCode').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                errorEl.textContent = 'Enter a valid 6-digit code.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (newPassword.length < 8) {
+                errorEl.textContent = 'Password must be at least 8 characters.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                errorEl.textContent = 'Passwords do not match.';
+                errorEl.classList.add('show');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentEmail, code, new_password: newPassword })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorEl.textContent = data.error || 'Invalid or expired code.';
+                    errorEl.classList.add('show');
+                    document.getElementById('resetCode').value = '';
+                    document.getElementById('resetCode').focus();
+                    return;
+                }
+
+                successEl.textContent = 'Password reset! Redirecting to login...';
+                successEl.classList.add('show');
+                setTimeout(() => { window.location.href = LOGIN_URL; }, 2000);
+            } catch (err) {
+                errorEl.textContent = 'Connection error. Try again.';
+                errorEl.classList.add('show');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Reset Password';
+            }
+        });
+
+        // ─── Resend code ───
+
+        document.getElementById('resendLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const link = e.target;
+            if (resendCooldown > 0) return;
+            link.classList.add('disabled');
+
+            try {
+                await fetch(`${API_BASE}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentEmail })
+                });
+            } catch { /* ignore */ }
+
+            resendCooldown = 60;
+            const timer = setInterval(() => {
+                resendCooldown--;
+                if (resendCooldown <= 0) {
+                    clearInterval(timer);
+                    link.textContent = 'Resend code';
+                    link.classList.remove('disabled');
+                } else {
+                    link.textContent = `Resend code (${resendCooldown}s)`;
+                }
+            }, 1000);
+            link.textContent = `Resend code (${resendCooldown}s)`;
+        });
+    </script>
+</body>
+</html>

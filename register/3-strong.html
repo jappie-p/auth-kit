@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register — Strong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 420px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #a855f7;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: 700; color: #fff;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #262626;
+            transition: background 0.3s;
+        }
+
+        .step-dot.active { background: #a855f7; }
+        .step-dot.done { background: #22c55e; }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #a855f7; }
+        .form-group input::placeholder { color: #525252; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #a855f7;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid #262626;
+            color: #a3a3a3;
+        }
+
+        .btn-secondary:hover { border-color: #404040; }
+
+        .error, .success {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            color: #22c55e;
+            text-align: center;
+        }
+
+        .error.show, .success.show { display: block; }
+
+        /* Password strength */
+        .strength-bar {
+            height: 3px; border-radius: 2px;
+            background: #262626; margin-top: 4px; overflow: hidden;
+        }
+
+        .strength-bar .fill {
+            height: 100%; width: 0; border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .password-reqs {
+            display: flex; flex-wrap: wrap;
+            gap: 6px 12px; margin-top: 4px;
+        }
+
+        .password-reqs .req {
+            font-size: 0.7rem; color: #525252;
+            transition: color 0.2s;
+        }
+
+        .password-reqs .req.met { color: #22c55e; }
+
+        .match-indicator {
+            font-size: 0.75rem; margin-top: 2px; display: none;
+        }
+
+        .match-indicator.show { display: block; }
+        .match-indicator.match { color: #22c55e; }
+        .match-indicator.no-match { color: #ef4444; }
+
+        /* Terms */
+        .terms-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: #a3a3a3;
+            line-height: 1.5;
+        }
+
+        .terms-group input[type="checkbox"] {
+            accent-color: #a855f7;
+            width: 16px; height: 16px;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .terms-group a { color: #a855f7; text-decoration: none; }
+        .terms-group a:hover { text-decoration: underline; }
+
+        /* Verify code input */
+        .verify-input {
+            text-align: center;
+            font-size: 1.4rem !important;
+            letter-spacing: 0.4em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .resend-link {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #737373;
+        }
+
+        .resend-link a {
+            color: #a855f7;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .resend-link a:hover { text-decoration: underline; }
+        .resend-link a.disabled { color: #525252; pointer-events: none; }
+
+        .login-link {
+            text-align: center; margin-top: 20px;
+            font-size: 0.85rem; color: #737373;
+        }
+
+        .login-link a { color: #a855f7; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">S</div>
+                <h1>Create Account</h1>
+                <p>Secure registration</p>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1"></div>
+                <div class="step-dot" id="dot2"></div>
+            </div>
+
+            <!-- Step 1: Register -->
+            <form class="form" id="registerForm">
+                <div class="error" id="error"></div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username"
+                           maxlength="30" placeholder="3-30 characters">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="new-password" maxlength="128">
+                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                    <div class="password-reqs">
+                        <span class="req" id="req-len">8+ chars</span>
+                        <span class="req" id="req-upper">Uppercase</span>
+                        <span class="req" id="req-lower">Lowercase</span>
+                        <span class="req" id="req-num">Number</span>
+                        <span class="req" id="req-special">Special</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="match-indicator" id="matchIndicator"></div>
+                </div>
+
+                <!-- Honeypot -->
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                    <input type="text" name="fax_number" tabindex="-1" autocomplete="off">
+                </div>
+
+                <div class="terms-group">
+                    <input type="checkbox" id="terms" required>
+                    <label for="terms">
+                        I agree to the <a href="/terms" target="_blank">Terms of Service</a>
+                        and <a href="/privacy" target="_blank">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Create Account</button>
+            </form>
+
+            <!-- Step 2: Email verification -->
+            <form class="form" id="verifyForm" style="display: none;">
+                <div class="error" id="verifyError"></div>
+                <div class="success" id="verifySuccess"></div>
+
+                <p style="text-align: center; color: #a3a3a3; font-size: 0.85rem; line-height: 1.5;">
+                    We sent a 6-digit code to<br>
+                    <strong id="sentToEmail" style="color: #fafafa;"></strong>
+                </p>
+
+                <div class="form-group">
+                    <label for="verifyCode">Verification Code</label>
+                    <input type="text" id="verifyCode" name="verifyCode" required
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="verify-input">
+                </div>
+
+                <button type="submit" class="btn" id="verifyBtn">Verify Email</button>
+
+                <div class="resend-link">
+                    <a href="#" id="resendLink">Resend code</a>
+                </div>
+
+                <button type="button" class="btn btn-secondary" id="backBtn">Back to registration</button>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="login.html">Sign in</a>
+            </div>
+
+            <div class="tier-badge"><span>Tier 3 — Strong</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 3 — STRONG REGISTRATION
+         *
+         * Features:
+         * - 2-step flow: Register → Email verification
+         * - Password strength bar + requirements checklist
+         * - Confirm password with live match
+         * - Input sanitization + length limits
+         * - Honeypot fields (bot trap)
+         * - Terms of Service checkbox
+         * - Resend verification code (with cooldown)
+         * - Handles 409 (taken) and 429 (rate limit)
+         *
+         * Server endpoints:
+         * - POST /api/auth/register       → { username, email, password }
+         *   Returns { message, temp_token } — sends verification email
+         * - POST /api/auth/verify-email    → { temp_token, code }
+         *   Returns { user } on success
+         * - POST /api/auth/resend-verify   → { temp_token }
+         *   Resends the verification code
+         *
+         * TODO: Set API_BASE and LOGIN_URL below.
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = 'login.html';
+
+        const registerForm = document.getElementById('registerForm');
+        const verifyForm = document.getElementById('verifyForm');
+        const errorEl = document.getElementById('error');
+        const submitBtn = document.getElementById('submitBtn');
+        const strengthFill = document.getElementById('strengthFill');
+        const matchIndicator = document.getElementById('matchIndicator');
+
+        let tempToken = null;
+        let resendCooldown = 0;
+
+        // ─── Password strength ───
+
+        const reqs = {
+            len: (v) => v.length >= 8,
+            upper: (v) => /[A-Z]/.test(v),
+            lower: (v) => /[a-z]/.test(v),
+            num: (v) => /\d/.test(v),
+            special: (v) => /[^A-Za-z0-9]/.test(v)
+        };
+
+        document.getElementById('password').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+            Object.entries(reqs).forEach(([key, fn]) => {
+                const met = fn(val);
+                if (met) score++;
+                document.getElementById(`req-${key}`).classList.toggle('met', met);
+            });
+            const pct = val.length === 0 ? 0 : Math.min(score / 5 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#22c55e'];
+            strengthFill.style.width = pct + '%';
+            strengthFill.style.background = colors[Math.min(score, 4)] || '#262626';
+            updateMatch();
+        });
+
+        function updateMatch() {
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            if (!confirm) { matchIndicator.classList.remove('show'); return; }
+            matchIndicator.classList.add('show');
+            if (pass === confirm) {
+                matchIndicator.textContent = 'Passwords match';
+                matchIndicator.className = 'match-indicator show match';
+            } else {
+                matchIndicator.textContent = 'Passwords do not match';
+                matchIndicator.className = 'match-indicator show no-match';
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('input', updateMatch);
+
+        function showError(elId, msg) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function hideError(elId) {
+            document.getElementById(elId).classList.remove('show');
+        }
+
+        // ─── Step navigation ───
+
+        function goToStep(step) {
+            if (step === 1) {
+                registerForm.style.display = 'flex';
+                verifyForm.style.display = 'none';
+                document.getElementById('dot1').className = 'step-dot active';
+                document.getElementById('dot2').className = 'step-dot';
+            } else {
+                registerForm.style.display = 'none';
+                verifyForm.style.display = 'flex';
+                document.getElementById('dot1').className = 'step-dot done';
+                document.getElementById('dot2').className = 'step-dot active';
+            }
+        }
+
+        document.getElementById('backBtn').addEventListener('click', () => goToStep(1));
+
+        // ─── Step 1: Register ───
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('error');
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const terms = document.getElementById('terms').checked;
+
+            if (!username || !email || !password || !confirmPassword) {
+                showError('error', 'All fields are required.');
+                return;
+            }
+
+            if (username.length < 3 || username.length > 30) {
+                showError('error', 'Username must be 3-30 characters.');
+                return;
+            }
+
+            if (/[<>'\";&|]/.test(username)) {
+                showError('error', 'Username contains invalid characters.');
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('error', 'Please enter a valid email address.');
+                return;
+            }
+
+            if (password.length < 8) {
+                showError('error', 'Password must be at least 8 characters.');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showError('error', 'Passwords do not match.');
+                return;
+            }
+
+            if (!terms) {
+                showError('error', 'You must agree to the Terms of Service.');
+                return;
+            }
+
+            // Check honeypots
+            const honeypots = document.querySelectorAll('input[name="website"], input[name="fax_number"]');
+            for (const hp of honeypots) {
+                if (hp.value) {
+                    await new Promise(r => setTimeout(r, 2000));
+                    showError('error', 'Registration failed.');
+                    return;
+                }
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.status === 409) {
+                    showError('error', data.error || 'Username or email already taken.');
+                    return;
+                }
+
+                if (res.status === 429) {
+                    showError('error', 'Too many attempts. Please wait.');
+                    return;
+                }
+
+                if (!res.ok) {
+                    showError('error', data.error || 'Registration failed.');
+                    return;
+                }
+
+                tempToken = data.temp_token;
+                document.getElementById('sentToEmail').textContent = email;
+                goToStep(2);
+                document.getElementById('verifyCode').focus();
+            } catch (err) {
+                showError('error', 'Connection error. Try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+
+        // ─── Step 2: Verify email ───
+
+        verifyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('verifyError');
+
+            const code = document.getElementById('verifyCode').value.trim();
+            const verifyBtn = document.getElementById('verifyBtn');
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('verifyError', 'Enter a valid 6-digit code.');
+                return;
+            }
+
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken, code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('verifyError', data.error || 'Invalid code. Try again.');
+                    document.getElementById('verifyCode').value = '';
+                    document.getElementById('verifyCode').focus();
+                    return;
+                }
+
+                const successEl = document.getElementById('verifySuccess');
+                successEl.textContent = 'Email verified! Redirecting to login...';
+                successEl.classList.add('show');
+                document.getElementById('dot2').className = 'step-dot done';
+
+                setTimeout(() => { window.location.href = LOGIN_URL; }, 2000);
+            } catch (err) {
+                showError('verifyError', 'Connection error. Try again.');
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify Email';
+            }
+        });
+
+        // ─── Resend code ───
+
+        document.getElementById('resendLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const link = e.target;
+
+            if (resendCooldown > 0) return;
+
+            link.classList.add('disabled');
+
+            try {
+                await fetch(`${API_BASE}/auth/resend-verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken })
+                });
+            } catch { /* ignore */ }
+
+            // 60s cooldown
+            resendCooldown = 60;
+            const originalText = link.textContent;
+
+            const timer = setInterval(() => {
+                resendCooldown--;
+                if (resendCooldown <= 0) {
+                    clearInterval(timer);
+                    link.textContent = originalText;
+                    link.classList.remove('disabled');
+                } else {
+                    link.textContent = `Resend code (${resendCooldown}s)`;
+                }
+            }, 1000);
+
+            link.textContent = `Resend code (${resendCooldown}s)`;
+        });
+    </script>
+</body>
+</html>

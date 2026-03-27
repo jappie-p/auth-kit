@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Super</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header .logo {
+            width: 48px;
+            height: 48px;
+            background: #ef4444;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .login-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+            letter-spacing: -0.02em;
+        }
+
+        .login-header p {
+            color: #737373;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: #a3a3a3;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ef4444;
+        }
+
+        .form-group input::placeholder { color: #525252; }
+
+        .totp-input {
+            text-align: center;
+            font-size: 1.4rem !important;
+            letter-spacing: 0.4em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .login-btn {
+            padding: 12px 20px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .login-btn:hover { opacity: 0.9; }
+        .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .login-error.show { display: block; }
+
+        .login-error.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .countdown { font-weight: 600; font-size: 1.1em; }
+
+        .force-option {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #a3a3a3;
+        }
+
+        .force-option.show { display: flex; }
+
+        .force-option input[type="checkbox"] {
+            accent-color: #ef4444;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 2FA Setup */
+        .setup-2fa { display: none; }
+        .setup-2fa.show { display: block; }
+
+        .setup-2fa h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .setup-2fa p {
+            font-size: 0.85rem;
+            color: #a3a3a3;
+            margin-bottom: 12px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .qr-container {
+            text-align: center;
+            margin: 16px 0;
+        }
+
+        .qr-container img {
+            border-radius: 8px;
+            background: #fff;
+            padding: 8px;
+            max-width: 200px;
+        }
+
+        .manual-key {
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            padding: 10px 14px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #a3a3a3;
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+
+        .manual-key strong {
+            color: #fafafa;
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .setup-success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: #22c55e;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .setup-success.show { display: block; }
+
+        .divider {
+            height: 1px;
+            background: #262626;
+            margin: 16px 0;
+        }
+
+        .security-info {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        .security-info p {
+            font-size: 0.7rem;
+            color: #404040;
+            line-height: 1.6;
+        }
+
+        .tier-badge {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.75rem;
+            color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            border-radius: 100px;
+            padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">HQ</div>
+                <h1>Admin Access</h1>
+                <p>Authenticated access only</p>
+            </div>
+
+            <!-- Login Form — username + password + mandatory TOTP -->
+            <form class="login-form" id="loginForm">
+                <div class="login-error" id="loginError"></div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" autofocus maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" maxlength="128">
+                </div>
+
+                <div class="form-group">
+                    <label for="totp">Authentication code</label>
+                    <input type="text" id="totp" name="totp" required autocomplete="one-time-code"
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="totp-input">
+                </div>
+
+                <!-- Honeypot fields -->
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                    <input type="text" name="company_name" tabindex="-1" autocomplete="off">
+                </div>
+
+                <label class="force-option" id="forceOption">
+                    <input type="checkbox" id="forceReplace">
+                    Force takeover existing session
+                </label>
+
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+
+            <!-- 2FA Setup (shown when user needs to configure 2FA) -->
+            <div class="setup-2fa" id="setup2fa">
+                <div class="divider"></div>
+                <h2>Set up 2FA</h2>
+                <p>Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.), or enter the key manually.</p>
+
+                <div class="qr-container" id="qrContainer"></div>
+
+                <div class="manual-key" id="manualKey">
+                    <strong>Manual key</strong>
+                    <span id="manualKeyValue"></span>
+                </div>
+
+                <form class="login-form" id="confirm2faForm">
+                    <div class="login-error" id="setup2faError"></div>
+
+                    <div class="form-group">
+                        <label for="confirmCode">Confirmation code</label>
+                        <input type="text" id="confirmCode" name="confirmCode" required
+                               autocomplete="one-time-code" placeholder="000000"
+                               maxlength="6" pattern="[0-9]{6}"
+                               inputmode="numeric" class="totp-input">
+                    </div>
+
+                    <button type="submit" class="login-btn" id="confirm2faBtn">Confirm setup</button>
+                </form>
+
+                <div class="setup-success" id="setupSuccess">
+                    2FA configured. You can now sign in.
+                </div>
+            </div>
+
+            <div class="security-info">
+                <p>
+                    All login attempts are logged with IP, device, and location.
+                    <br>Unauthorized access will result in permanent IP ban.
+                </p>
+            </div>
+
+            <div class="tier-badge"><span>Tier 4 — Super</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 4 — SUPER LOGIN (based on HypHosting HQ)
+         *
+         * Features:
+         * - Mandatory 2FA (TOTP) on the login form itself — no separate step
+         * - Single active session enforcement (force takeover option)
+         * - 2FA setup flow with QR code + manual key
+         * - Honeypot fields (bot trap)
+         * - Input sanitization + length limits
+         * - Rate limit + lockout countdown (429/423)
+         * - Growing cooldown between fails
+         * - noindex/nofollow meta tags (hidden from search engines)
+         * - Security warning footer (deterrent)
+         * - Safe DOM manipulation (no innerHTML for user data)
+         *
+         * Security: Maximum — suitable for admin panels, owner dashboards.
+         * Good for: Admin HQ, superadmin panels, infrastructure dashboards.
+         *
+         * Server requirements:
+         * - POST /api/hq/login          → { username, password, totpCode, forceReplace? }
+         *     Returns 200 on success, sets httpOnly cookie
+         *     Returns { error: 'active_session', message } when session exists
+         *     Returns { error: 'hq_2fa_setup_required' } when 2FA not configured
+         * - POST /api/hq/setup-2fa      → returns { qr_url, manual_key, pending_secret }
+         * - POST /api/hq/confirm-2fa    → { totpCode, pendingSecret }
+         * - 429 with { retry_after }
+         * - 423 with { permanent, retry_after }
+         *
+         * TODO: Set your API_BASE and REDIRECT below.
+         */
+
+        const API_BASE = '/api';
+        const REDIRECT = '/admin/';
+
+        let failCount = 0;
+        let loginInProgress = false;
+        let lockoutTimer = null;
+        let pendingSecret = null;
+
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+        const forceOption = document.getElementById('forceOption');
+        const forceReplace = document.getElementById('forceReplace');
+
+        const setup2fa = document.getElementById('setup2fa');
+        const qrContainer = document.getElementById('qrContainer');
+        const manualKeyValue = document.getElementById('manualKeyValue');
+        const confirm2faForm = document.getElementById('confirm2faForm');
+        const setup2faError = document.getElementById('setup2faError');
+        const confirm2faBtn = document.getElementById('confirm2faBtn');
+        const setupSuccess = document.getElementById('setupSuccess');
+
+        // ─── Helpers ───
+
+        function showError(el, msg, type = 'error') {
+            el.textContent = msg;
+            el.classList.remove('warning');
+            if (type === 'warning') el.classList.add('warning');
+            el.classList.add('show');
+        }
+
+        function hideError(el) {
+            el.textContent = '';
+            el.classList.remove('show', 'warning');
+        }
+
+        function setLoading(btn, loading, label = 'Sign In') {
+            btn.disabled = loading;
+            btn.textContent = loading ? 'Please wait...' : label;
+        }
+
+        function clearChildren(el) {
+            while (el.firstChild) el.removeChild(el.firstChild);
+        }
+
+        // ─── Lockout countdown ───
+
+        function startLockoutCountdown(seconds, message) {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const totpInput = document.getElementById('totp');
+
+            if (lockoutTimer) clearInterval(lockoutTimer);
+
+            loginBtn.disabled = true;
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
+            totpInput.disabled = true;
+            loginError.classList.add('warning', 'show');
+
+            function tick() {
+                if (seconds <= 0) {
+                    clearInterval(lockoutTimer);
+                    lockoutTimer = null;
+                    hideError(loginError);
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    usernameInput.disabled = false;
+                    passwordInput.disabled = false;
+                    totpInput.disabled = false;
+                    loginInProgress = false;
+                    return;
+                }
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                const timeStr = mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
+                loginError.innerHTML = `${message} <span class="countdown">${timeStr}</span>`;
+                loginBtn.textContent = `Wait ${timeStr}`;
+                seconds--;
+            }
+            tick();
+            lockoutTimer = setInterval(tick, 1000);
+        }
+
+        // ─── Login form ───
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (loginInProgress) return;
+            loginInProgress = true;
+            hideError(loginError);
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const totp = document.getElementById('totp').value.trim();
+
+            if (!username || !password || !totp) {
+                loginInProgress = false;
+                return;
+            }
+
+            if (username.length > 50 || password.length > 128) {
+                showError(loginError, 'Invalid input.');
+                loginInProgress = false;
+                return;
+            }
+
+            if (/[<>'\";&|]/.test(username)) {
+                showError(loginError, 'Invalid characters in username.');
+                loginInProgress = false;
+                return;
+            }
+
+            if (!/^\d{6}$/.test(totp)) {
+                showError(loginError, 'Enter a valid 6-digit code.');
+                loginInProgress = false;
+                return;
+            }
+
+            // Check honeypots
+            const honeypots = document.querySelectorAll('input[name="website"], input[name="company_name"]');
+            for (const hp of honeypots) {
+                if (hp.value) {
+                    // Bot detected — fake a delay and show generic error
+                    await new Promise(r => setTimeout(r, 2000));
+                    showError(loginError, 'Authentication failed.');
+                    loginInProgress = false;
+                    return;
+                }
+            }
+
+            setLoading(loginBtn, true);
+
+            try {
+                const body = { username, password, totpCode: totp };
+                if (forceReplace.checked) body.forceReplace = true;
+
+                const res = await fetch(`${API_BASE}/hq/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(body)
+                });
+
+                let data = {};
+                try { data = await res.json(); } catch { /* empty body */ }
+
+                if (res.ok) {
+                    window.location.href = REDIRECT;
+                    return;
+                }
+
+                failCount++;
+
+                // 429 — rate limited
+                if (res.status === 429) {
+                    startLockoutCountdown(data.retry_after || 15, 'Too many attempts. Try again in');
+                    return;
+                }
+
+                // 423 — account locked
+                if (res.status === 423) {
+                    if (data.permanent) {
+                        showError(loginError, 'Account permanently locked.');
+                    } else {
+                        startLockoutCountdown(data.retry_after || 900, 'Account locked. Try again in');
+                    }
+                    return;
+                }
+
+                // Active session exists
+                if (data.error === 'active_session') {
+                    forceOption.classList.add('show');
+                    showError(loginError, data.message || 'An active session exists. Check the box to force takeover.');
+                    return;
+                }
+
+                // 2FA not set up yet
+                if (data.error === 'hq_2fa_setup_required') {
+                    await start2faSetup();
+                    return;
+                }
+
+                // Generic error
+                forceOption.classList.remove('show');
+                showError(loginError, data.error || 'Authentication failed.');
+
+                const delay = Math.min(failCount * 1000, 5000);
+                setTimeout(() => {
+                    loginInProgress = false;
+                }, delay);
+
+            } catch (err) {
+                showError(loginError, 'Connection error. Try again.');
+            } finally {
+                setLoading(loginBtn, false);
+            }
+        });
+
+        // ─── 2FA Setup flow ───
+
+        async function start2faSetup() {
+            hideError(loginError);
+            setLoading(loginBtn, true);
+
+            try {
+                const res = await fetch(`${API_BASE}/hq/setup-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError(loginError, data.error || 'Could not start 2FA setup.');
+                    return;
+                }
+
+                pendingSecret = data.pending_secret;
+
+                // Render QR code (safe DOM)
+                clearChildren(qrContainer);
+                if (data.qr_url) {
+                    const img = document.createElement('img');
+                    img.src = data.qr_url;
+                    img.alt = 'QR Code';
+                    qrContainer.appendChild(img);
+                }
+
+                manualKeyValue.textContent = data.manual_key || '';
+
+                setup2fa.classList.add('show');
+                setupSuccess.classList.remove('show');
+                hideError(setup2faError);
+                document.getElementById('confirmCode').value = '';
+                document.getElementById('confirmCode').focus();
+
+            } catch (err) {
+                showError(loginError, 'Connection error during 2FA setup.');
+            } finally {
+                setLoading(loginBtn, false);
+            }
+        }
+
+        // ─── Confirm 2FA setup ───
+
+        confirm2faForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError(setup2faError);
+
+            const code = document.getElementById('confirmCode').value.trim();
+            if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError(setup2faError, 'Enter the 6-digit code from your authenticator.');
+                return;
+            }
+
+            setLoading(confirm2faBtn, true, 'Confirm setup');
+
+            try {
+                const res = await fetch(`${API_BASE}/hq/confirm-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ totpCode: code, pendingSecret })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    confirm2faForm.style.display = 'none';
+                    clearChildren(qrContainer);
+                    document.getElementById('manualKey').style.display = 'none';
+                    setupSuccess.classList.add('show');
+
+                    setTimeout(() => {
+                        setup2fa.classList.remove('show');
+                        confirm2faForm.style.display = '';
+                        document.getElementById('manualKey').style.display = '';
+                        setupSuccess.classList.remove('show');
+                        loginForm.reset();
+                        forceOption.classList.remove('show');
+                        hideError(loginError);
+                        loginInProgress = false;
+                        document.getElementById('username').focus();
+                    }, 3000);
+                } else {
+                    showError(setup2faError, data.error || 'Invalid code. Try again.');
+                }
+            } catch (err) {
+                showError(setup2faError, 'Connection error. Try again.');
+            } finally {
+                setLoading(confirm2faBtn, false, 'Confirm setup');
+            }
+        });
+    </script>
+</body>
+</html>

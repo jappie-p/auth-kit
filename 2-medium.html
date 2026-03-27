@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Medium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header .logo {
+            width: 48px;
+            height: 48px;
+            background: #3b82f6;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .login-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .login-header p {
+            color: #737373;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: #a3a3a3;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .login-btn {
+            padding: 12px 20px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .login-btn:hover { opacity: 0.9; }
+        .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .login-error.show { display: block; }
+
+        .login-error.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .countdown { font-weight: 600; font-size: 1.1em; }
+
+        .password-strength {
+            height: 3px;
+            border-radius: 2px;
+            background: #262626;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .password-strength .bar {
+            height: 100%;
+            width: 0;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .tier-badge {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.75rem;
+            color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            border-radius: 100px;
+            padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">M</div>
+                <h1>Sign In</h1>
+                <p>Standard authentication</p>
+            </div>
+
+            <form class="login-form" id="loginForm">
+                <div class="login-error" id="loginError"></div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" autofocus maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" maxlength="128">
+                    <div class="password-strength"><div class="bar" id="strengthBar"></div></div>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+
+            <div class="tier-badge"><span>Tier 2 — Medium</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 2 — MEDIUM LOGIN
+         *
+         * Features:
+         * - Input sanitization (blocks special chars in username)
+         * - Length limits (username 50, password 128)
+         * - Client-side rate limiting with lockout countdown
+         * - Growing cooldown between failed attempts (1s → 5s)
+         * - Password strength indicator
+         * - Handles 429 (rate limit) and 423 (account lock) from server
+         * - Safe redirect (blocks open redirects)
+         *
+         * Security: Moderate — good for standard web apps.
+         * Good for: SaaS dashboards, team tools, customer portals.
+         *
+         * TODO: Set your API_BASE and REDIRECT below.
+         */
+
+        const API_BASE = '/api';
+        const REDIRECT = '/dashboard';
+
+        // Safe redirect from ?redirect= param
+        const urlParams = new URLSearchParams(window.location.search);
+        const rawRedirect = urlParams.get('redirect') || REDIRECT;
+        const redirectTo = (rawRedirect.includes('://') || rawRedirect.startsWith('//'))
+            ? REDIRECT : rawRedirect;
+
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        const loginBtn = document.getElementById('loginBtn');
+        const strengthBar = document.getElementById('strengthBar');
+
+        let failCount = 0;
+        let loginInProgress = false;
+        let lockoutTimer = null;
+
+        // Password strength indicator
+        document.getElementById('password').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (val.length >= 12) score++;
+            if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+            if (/\d/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            const pct = Math.min(score / 5 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#22c55e'];
+            strengthBar.style.width = pct + '%';
+            strengthBar.style.background = colors[Math.min(score, 4)] || '#262626';
+        });
+
+        function showError(msg, type = 'error') {
+            loginError.textContent = msg;
+            loginError.classList.remove('warning');
+            if (type === 'warning') loginError.classList.add('warning');
+            loginError.classList.add('show');
+        }
+
+        function hideError() {
+            loginError.classList.remove('show', 'warning');
+        }
+
+        function startLockoutCountdown(seconds, message) {
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            if (lockoutTimer) clearInterval(lockoutTimer);
+
+            loginBtn.disabled = true;
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
+            loginError.classList.add('warning', 'show');
+
+            function tick() {
+                if (seconds <= 0) {
+                    clearInterval(lockoutTimer);
+                    lockoutTimer = null;
+                    hideError();
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    usernameInput.disabled = false;
+                    passwordInput.disabled = false;
+                    loginInProgress = false;
+                    return;
+                }
+
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                const timeStr = mins > 0
+                    ? `${mins}:${secs.toString().padStart(2, '0')}`
+                    : `${secs}s`;
+
+                loginError.innerHTML = `${message} <span class="countdown">${timeStr}</span>`;
+                loginBtn.textContent = `Wait ${timeStr}`;
+                seconds--;
+            }
+
+            tick();
+            lockoutTimer = setInterval(tick, 1000);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (loginInProgress) return;
+            loginInProgress = true;
+            hideError();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Please enter username and password.');
+                loginInProgress = false;
+                return;
+            }
+
+            // Input sanitization
+            if (username.length > 50 || password.length > 128) {
+                showError('Invalid input.');
+                loginInProgress = false;
+                return;
+            }
+
+            if (/[<>'\";&|]/.test(username)) {
+                showError('Invalid characters in username.');
+                loginInProgress = false;
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ username, password })
+                });
+
+                // Handle non-JSON responses (e.g. rate limit HTML pages)
+                let data;
+                try {
+                    data = await res.json();
+                } catch {
+                    failCount++;
+                    startLockoutCountdown(10, 'Too many attempts. Try again in');
+                    return;
+                }
+
+                if (res.ok) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = redirectTo;
+                    return;
+                }
+
+                failCount++;
+
+                // 429 — server rate limit
+                if (res.status === 429) {
+                    startLockoutCountdown(data.retry_after || 15, 'Too many attempts. Try again in');
+                    return;
+                }
+
+                // 423 — account locked
+                if (res.status === 423) {
+                    if (data.permanent) {
+                        showError('Account locked. Contact an administrator.');
+                    } else {
+                        startLockoutCountdown(data.retry_after || 900, 'Account locked. Try again in');
+                    }
+                    return;
+                }
+
+                showError(data.error || 'Invalid credentials.');
+
+                // Growing cooldown between fails
+                const delay = Math.min(failCount * 1000, 5000);
+                setTimeout(() => {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    loginInProgress = false;
+                }, delay);
+                return;
+
+            } catch (err) {
+                showError('Connection error. Try again.');
+            }
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
+            loginInProgress = false;
+        });
+    </script>
+</body>
+</html>

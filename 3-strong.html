@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login — Strong</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-header .logo {
+            width: 48px;
+            height: 48px;
+            background: #a855f7;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .login-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .login-header p {
+            color: #737373;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: #a3a3a3;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #a855f7;
+        }
+
+        .form-group input::placeholder { color: #525252; }
+
+        .totp-input {
+            text-align: center;
+            font-size: 1.4rem !important;
+            letter-spacing: 0.4em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .login-btn {
+            padding: 12px 20px;
+            background: #a855f7;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .login-btn:hover { opacity: 0.9; }
+        .login-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .login-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .login-error.show { display: block; }
+
+        .login-error.warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: #f59e0b;
+            color: #f59e0b;
+        }
+
+        .login-error.locked {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .countdown { font-weight: 600; font-size: 1.1em; }
+
+        .back-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .back-link a {
+            color: #737373;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+
+        .back-link a:hover { color: #a3a3a3; }
+
+        .tier-badge {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.75rem;
+            color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a;
+            border: 1px solid #262626;
+            border-radius: 100px;
+            padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">S</div>
+                <h1>Sign In</h1>
+                <p>Secure authentication</p>
+            </div>
+
+            <!-- Login Form -->
+            <form class="login-form" id="loginForm">
+                <div class="login-error" id="loginError"></div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required autocomplete="username" autofocus maxlength="50">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required autocomplete="current-password" maxlength="128">
+                </div>
+
+                <!-- Honeypot fields — hidden from real users, bots fill them -->
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                    <input type="text" name="url" tabindex="-1" autocomplete="off">
+                    <input type="text" name="email2" tabindex="-1" autocomplete="off">
+                </div>
+
+                <!-- Challenge token (set by server when needed) -->
+                <input type="hidden" id="challengeToken" name="_challenge" value="">
+
+                <button type="submit" class="login-btn" id="loginBtn">Sign In</button>
+            </form>
+
+            <!-- 2FA Form (hidden by default) -->
+            <form class="login-form" id="twoFAForm" style="display: none;">
+                <div class="login-error" id="twoFAError"></div>
+
+                <div class="form-group">
+                    <label for="twoFACode">Authentication Code</label>
+                    <input type="text" id="twoFACode" name="twoFACode" required autocomplete="one-time-code"
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="totp-input">
+                </div>
+
+                <button type="submit" class="login-btn" id="verifyBtn">Verify</button>
+
+                <div class="back-link">
+                    <a href="#" id="useBackupCode">Use backup code instead</a>
+                </div>
+                <div class="back-link">
+                    <a href="#" id="cancelTwoFA">Cancel and try again</a>
+                </div>
+            </form>
+
+            <!-- Backup Code Form (hidden by default) -->
+            <form class="login-form" id="backupCodeForm" style="display: none;">
+                <div class="login-error" id="backupError"></div>
+
+                <div class="form-group">
+                    <label for="backupCode">Backup Code</label>
+                    <input type="text" id="backupCode" name="backupCode" required
+                           placeholder="XXXXXXXX" maxlength="8"
+                           style="text-align: center; font-size: 1.2rem; letter-spacing: 0.3em; text-transform: uppercase;">
+                </div>
+
+                <button type="submit" class="login-btn" id="backupVerifyBtn">Verify Backup Code</button>
+
+                <div class="back-link">
+                    <a href="#" id="backToTwoFA">Back to authenticator code</a>
+                </div>
+            </form>
+
+            <div class="tier-badge"><span>Tier 3 — Strong</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 3 — STRONG LOGIN (based on HypHosting panel)
+         *
+         * Features:
+         * - Input sanitization + length limits
+         * - Honeypot fields (bot trap)
+         * - Challenge token support (HMAC-SHA256, IP-bound)
+         * - Auto challenge-retry on 428 response
+         * - Optional 2FA (TOTP) with backup codes
+         * - Rate limit handling (429) with countdown
+         * - Account lockout handling (423) with permanent/temporary
+         * - Growing cooldown between failed attempts
+         * - Double-submit prevention (loginInProgress guard)
+         * - Safe redirect (blocks open redirects)
+         *
+         * Security: Strong — suitable for production apps.
+         * Good for: Customer portals, admin panels, SaaS platforms.
+         *
+         * Server requirements:
+         * - POST /api/auth/login       → returns { user } or { requires_2fa, temp_token }
+         * - POST /api/auth/verify-2fa  → accepts { temp_token, code } or { temp_token, backup_code }
+         * - 428 response with { challenge } for challenge token flow
+         * - 429 response with { retry_after } for rate limiting
+         * - 423 response with { permanent, retry_after } for account lockout
+         *
+         * TODO: Set your API_BASE and REDIRECT below.
+         */
+
+        const API_BASE = '/api';
+        const REDIRECT = '/dashboard';
+
+        // Safe redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        const rawRedirect = urlParams.get('redirect') || REDIRECT;
+        const redirectTo = (rawRedirect.includes('://') || rawRedirect.startsWith('//'))
+            ? REDIRECT : rawRedirect;
+
+        let failCount = 0;
+        let loginInProgress = false;
+        let lockoutTimer = null;
+
+        // ─── Helpers ───
+
+        function showError(elId, msg, type = 'error') {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.classList.remove('warning', 'locked');
+            if (type === 'warning') el.classList.add('warning');
+            if (type === 'locked') el.classList.add('locked');
+            el.classList.add('show');
+        }
+
+        function hideError(elId) {
+            const el = document.getElementById(elId);
+            el.classList.remove('show', 'warning', 'locked');
+        }
+
+        async function safeJSON(response) {
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch {
+                const err = new Error('Too many attempts. Please wait and try again.');
+                err.status = response.status;
+                err.data = { retry_after: 10 };
+                throw err;
+            }
+        }
+
+        // ─── Lockout countdown ───
+
+        function startLockoutCountdown(seconds, message, type = 'warning') {
+            const loginBtn = document.getElementById('loginBtn');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+
+            if (lockoutTimer) clearInterval(lockoutTimer);
+
+            loginBtn.disabled = true;
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
+
+            const errorEl = document.getElementById('loginError');
+            errorEl.classList.remove('warning', 'locked');
+            if (type === 'locked') errorEl.classList.add('locked');
+            else errorEl.classList.add('warning');
+            errorEl.classList.add('show');
+
+            function tick() {
+                if (seconds <= 0) {
+                    clearInterval(lockoutTimer);
+                    lockoutTimer = null;
+                    hideError('loginError');
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    usernameInput.disabled = false;
+                    passwordInput.disabled = false;
+                    loginInProgress = false;
+                    return;
+                }
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                const timeStr = mins > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${secs}s`;
+                errorEl.innerHTML = `${message} <span class="countdown">${timeStr}</span>`;
+                loginBtn.textContent = `Wait ${timeStr}`;
+                seconds--;
+            }
+            tick();
+            lockoutTimer = setInterval(tick, 1000);
+        }
+
+        // ─── Form switching ───
+
+        function showLoginForm() {
+            document.getElementById('loginForm').style.display = 'flex';
+            document.getElementById('twoFAForm').style.display = 'none';
+            document.getElementById('backupCodeForm').style.display = 'none';
+            sessionStorage.removeItem('_2fa_temp');
+        }
+
+        function showTwoFAForm() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('twoFAForm').style.display = 'flex';
+            document.getElementById('twoFACode').focus();
+        }
+
+        function showBackupCodeForm() {
+            document.getElementById('twoFAForm').style.display = 'none';
+            document.getElementById('backupCodeForm').style.display = 'flex';
+            document.getElementById('backupCode').focus();
+        }
+
+        // ─── Login form ───
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (loginInProgress) return;
+            loginInProgress = true;
+            hideError('loginError');
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
+
+            if (!username || !password) {
+                showError('loginError', 'Please enter username and password.');
+                loginInProgress = false;
+                return;
+            }
+
+            if (username.length > 50 || password.length > 128) {
+                showError('loginError', 'Invalid input.');
+                loginInProgress = false;
+                return;
+            }
+
+            if (/[<>'\";&|]/.test(username)) {
+                showError('loginError', 'Invalid characters in username.');
+                loginInProgress = false;
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Signing in...';
+
+            // Collect honeypot + challenge fields
+            const extras = {};
+            const challengeToken = document.getElementById('challengeToken').value;
+            if (challengeToken) extras._challenge = challengeToken;
+            ['website', 'url', 'email2'].forEach(name => {
+                const el = document.querySelector(`input[name="${name}"]`);
+                if (el) extras[name] = el.value;
+            });
+
+            try {
+                const payload = { username, password, ...extras };
+                const url = `${API_BASE}/auth/login`;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await safeJSON(response);
+
+                // 428 — challenge required, auto-retry
+                if (response.status === 428 && data.challenge) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    const retryRes = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ ...payload, _challenge: data.challenge })
+                    });
+                    const retryData = await safeJSON(retryRes);
+
+                    if (!retryRes.ok) {
+                        const err = new Error(retryData.error || 'Login failed');
+                        err.status = retryRes.status;
+                        err.data = retryData;
+                        throw err;
+                    }
+
+                    if (retryData.requires_2fa) {
+                        sessionStorage.setItem('_2fa_temp', retryData.temp_token);
+                        loginBtn.disabled = false;
+                        loginBtn.textContent = 'Sign In';
+                        loginInProgress = false;
+                        showTwoFAForm();
+                        return;
+                    }
+
+                    localStorage.setItem('user', JSON.stringify(retryData.user));
+                    window.location.href = redirectTo;
+                    return;
+                }
+
+                // 423 — account locked
+                if (response.status === 423) {
+                    const err = new Error(data.error || 'Account locked');
+                    err.status = 423;
+                    err.data = data;
+                    throw err;
+                }
+
+                if (!response.ok) {
+                    const err = new Error(data.error || 'Login failed');
+                    err.status = response.status;
+                    err.data = data;
+                    throw err;
+                }
+
+                // 2FA required
+                if (data.requires_2fa) {
+                    sessionStorage.setItem('_2fa_temp', data.temp_token);
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    loginInProgress = false;
+                    showTwoFAForm();
+                    return;
+                }
+
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = redirectTo;
+
+            } catch (error) {
+                failCount++;
+                const status = error.status || 0;
+                const data = error.data || {};
+
+                if (status === 429) {
+                    startLockoutCountdown(data.retry_after || 15, 'Too many attempts. Try again in');
+                    return;
+                }
+
+                if (status === 423) {
+                    if (data.permanent) {
+                        showError('loginError', 'Account locked. Contact an administrator.', 'locked');
+                    } else {
+                        startLockoutCountdown(data.retry_after || 900, 'Account locked. Try again in', 'locked');
+                    }
+                    return;
+                }
+
+                showError('loginError', error.message || 'Invalid credentials.');
+
+                const delay = Math.min(failCount * 1000, 5000);
+                setTimeout(() => {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Sign In';
+                    loginInProgress = false;
+                }, delay);
+                return;
+            }
+
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Sign In';
+            loginInProgress = false;
+        });
+
+        // ─── 2FA verification ───
+
+        document.getElementById('twoFAForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('twoFACode').value.trim();
+            const btn = document.getElementById('verifyBtn');
+
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('twoFAError', 'Enter a valid 6-digit code.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            hideError('twoFAError');
+
+            try {
+                const tempToken = sessionStorage.getItem('_2fa_temp');
+                const res = await fetch(`${API_BASE}/auth/verify-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken, code })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Invalid code');
+
+                sessionStorage.removeItem('_2fa_temp');
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = redirectTo;
+            } catch (err) {
+                showError('twoFAError', err.message || 'Invalid code. Try again.');
+                document.getElementById('twoFACode').value = '';
+                document.getElementById('twoFACode').focus();
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Verify';
+        });
+
+        // ─── Backup code verification ───
+
+        document.getElementById('backupCodeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('backupCode').value.trim().toUpperCase();
+            const btn = document.getElementById('backupVerifyBtn');
+
+            if (code.length !== 8) {
+                showError('backupError', 'Enter a valid 8-character backup code.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            hideError('backupError');
+
+            try {
+                const tempToken = sessionStorage.getItem('_2fa_temp');
+                const res = await fetch(`${API_BASE}/auth/verify-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ temp_token: tempToken, backup_code: code })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Invalid backup code');
+
+                sessionStorage.removeItem('_2fa_temp');
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = redirectTo;
+            } catch (err) {
+                showError('backupError', err.message || 'Invalid code. Try again.');
+                document.getElementById('backupCode').value = '';
+                document.getElementById('backupCode').focus();
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Verify Backup Code';
+        });
+
+        // ─── Navigation links ───
+
+        document.getElementById('useBackupCode').addEventListener('click', (e) => {
+            e.preventDefault();
+            showBackupCodeForm();
+        });
+
+        document.getElementById('backToTwoFA').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('twoFAForm').style.display = 'flex';
+            document.getElementById('backupCodeForm').style.display = 'none';
+            document.getElementById('twoFACode').focus();
+        });
+
+        document.getElementById('cancelTwoFA').addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+        });
+    </script>
+</body>
+</html>

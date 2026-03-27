@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forgot Password — Super</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: #e5e5e5;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 420px; padding: 20px; }
+
+        .card {
+            background: #141414;
+            border: 1px solid #262626;
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 32px; }
+
+        .header .logo {
+            width: 48px; height: 48px;
+            background: #ef4444;
+            border-radius: 12px;
+            margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 700; color: #fff;
+        }
+
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
+        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; line-height: 1.5; }
+
+        .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: #262626; transition: background 0.3s; }
+        .step-dot.active { background: #ef4444; }
+        .step-dot.done { background: #22c55e; }
+
+        .step-label { text-align: center; font-size: 0.75rem; color: #525252; margin-bottom: 16px; }
+
+        .form { display: flex; flex-direction: column; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: #0a0a0a;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            color: #fafafa;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: #ef4444; }
+        .form-group input::placeholder { color: #525252; }
+
+        .btn {
+            padding: 12px 20px;
+            background: #ef4444;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .error, .success, .warning, .info {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+            line-height: 1.5;
+        }
+
+        .error { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; }
+        .success { background: rgba(34, 197, 94, 0.1); border: 1px solid #22c55e; color: #22c55e; text-align: center; }
+        .warning { background: rgba(245, 158, 11, 0.1); border: 1px solid #f59e0b; color: #f59e0b; }
+        .info { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; text-align: center; font-size: 0.8rem; }
+        .error.show, .success.show, .warning.show, .info.show { display: block; }
+
+        .countdown { font-weight: 600; }
+
+        .verify-input {
+            text-align: center; font-size: 1.4rem !important;
+            letter-spacing: 0.4em; font-variant-numeric: tabular-nums;
+        }
+
+        .strength-bar { height: 3px; border-radius: 2px; background: #262626; margin-top: 4px; overflow: hidden; }
+        .strength-bar .fill { height: 100%; width: 0; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+
+        .password-reqs { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 4px; }
+        .password-reqs .req { font-size: 0.7rem; color: #525252; transition: color 0.2s; }
+        .password-reqs .req.met { color: #22c55e; }
+
+        .match-indicator { font-size: 0.75rem; margin-top: 2px; display: none; }
+        .match-indicator.show { display: block; }
+        .match-indicator.match { color: #22c55e; }
+        .match-indicator.no-match { color: #ef4444; }
+
+        .resend-link { text-align: center; font-size: 0.8rem; color: #737373; }
+        .resend-link a { color: #ef4444; text-decoration: none; cursor: pointer; }
+        .resend-link a:hover { text-decoration: underline; }
+        .resend-link a.disabled { color: #525252; pointer-events: none; }
+
+        .attempts-left { text-align: center; font-size: 0.75rem; color: #525252; }
+
+        .security-info {
+            text-align: center; margin-top: 20px;
+            padding-top: 16px; border-top: 1px solid #1a1a1a;
+        }
+
+        .security-info p { font-size: 0.7rem; color: #404040; line-height: 1.6; }
+
+        .back-link {
+            text-align: center; margin-top: 16px;
+            font-size: 0.85rem; color: #737373;
+        }
+
+        .back-link a { color: #ef4444; text-decoration: none; }
+        .back-link a:hover { text-decoration: underline; }
+
+        .tier-badge {
+            text-align: center; margin-top: 24px;
+            font-size: 0.75rem; color: #525252;
+        }
+
+        .tier-badge span {
+            background: #1a1a1a; border: 1px solid #262626;
+            border-radius: 100px; padding: 4px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="logo">HQ</div>
+                <h1>Reset Password</h1>
+                <p>Identity verification required</p>
+            </div>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1"></div>
+                <div class="step-dot" id="dot2"></div>
+                <div class="step-dot" id="dot3"></div>
+                <div class="step-dot" id="dot4"></div>
+            </div>
+
+            <div class="step-label" id="stepLabel">Step 1 of 4 — Email</div>
+
+            <!-- Step 1: Email -->
+            <form class="form" id="emailForm">
+                <div class="error" id="emailError"></div>
+                <div class="warning" id="emailWarning"></div>
+
+                <div class="form-group">
+                    <label for="email">Account Email</label>
+                    <input type="email" id="email" name="email" required autocomplete="email" autofocus maxlength="100">
+                </div>
+
+                <div style="position: absolute; left: -9999px; opacity: 0; height: 0;">
+                    <input type="text" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
+                <button type="submit" class="btn" id="emailBtn">Continue</button>
+            </form>
+
+            <!-- Step 2: Email verification code -->
+            <form class="form" id="codeForm" style="display: none;">
+                <div class="error" id="codeError"></div>
+
+                <p style="text-align: center; color: #a3a3a3; font-size: 0.85rem; line-height: 1.5;">
+                    Code sent to <strong id="sentToEmail" style="color: #fafafa;"></strong>
+                </p>
+
+                <div class="form-group">
+                    <label for="resetCode">Verification Code</label>
+                    <input type="text" id="resetCode" name="resetCode" required
+                           placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="verify-input">
+                </div>
+
+                <div class="attempts-left" id="codeAttempts"></div>
+
+                <button type="submit" class="btn" id="codeBtn">Verify</button>
+
+                <div class="resend-link">
+                    <a href="#" id="resendLink">Resend code</a>
+                </div>
+            </form>
+
+            <!-- Step 3: 2FA verification -->
+            <form class="form" id="totpForm" style="display: none;">
+                <div class="error" id="totpError"></div>
+
+                <div class="info show">
+                    Enter your authenticator code to confirm your identity.
+                </div>
+
+                <div class="form-group">
+                    <label for="totpCode">Authenticator Code</label>
+                    <input type="text" id="totpCode" name="totpCode" required
+                           autocomplete="one-time-code" placeholder="000000"
+                           maxlength="6" pattern="[0-9]{6}"
+                           inputmode="numeric" class="verify-input">
+                </div>
+
+                <button type="submit" class="btn" id="totpBtn">Verify Identity</button>
+
+                <div class="back-link" style="margin-top: 8px;">
+                    <a href="#" id="useBackupCode" style="font-size: 0.8rem;">Use backup code instead</a>
+                </div>
+            </form>
+
+            <!-- Step 3b: Backup code -->
+            <form class="form" id="backupForm" style="display: none;">
+                <div class="error" id="backupError"></div>
+
+                <div class="form-group">
+                    <label for="backupCode">Backup Code</label>
+                    <input type="text" id="backupCode" name="backupCode" required
+                           placeholder="XXXXXXXX" maxlength="8"
+                           style="text-align: center; font-size: 1.2rem; letter-spacing: 0.3em; text-transform: uppercase;">
+                </div>
+
+                <button type="submit" class="btn" id="backupBtn">Verify Backup Code</button>
+
+                <div class="back-link" style="margin-top: 8px;">
+                    <a href="#" id="backToTotp" style="font-size: 0.8rem;">Back to authenticator</a>
+                </div>
+            </form>
+
+            <!-- Step 4: New password -->
+            <form class="form" id="resetForm" style="display: none;">
+                <div class="error" id="resetError"></div>
+                <div class="success" id="resetSuccess"></div>
+
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="strength-bar"><div class="fill" id="strengthFill"></div></div>
+                    <div class="password-reqs">
+                        <span class="req" id="req-len">8+ chars</span>
+                        <span class="req" id="req-upper">Uppercase</span>
+                        <span class="req" id="req-lower">Lowercase</span>
+                        <span class="req" id="req-num">Number</span>
+                        <span class="req" id="req-special">Special</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="new-password" maxlength="128">
+                    <div class="match-indicator" id="matchIndicator"></div>
+                </div>
+
+                <button type="submit" class="btn" id="resetBtn">Reset Password</button>
+            </form>
+
+            <div class="back-link">
+                <a href="login.html">Back to login</a>
+            </div>
+
+            <div class="security-info">
+                <p>All password reset attempts are logged with IP and device information.</p>
+            </div>
+
+            <div class="tier-badge"><span>Tier 4 — Super</span></div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * TIER 4 — SUPER FORGOT PASSWORD
+         *
+         * Features:
+         * - 4-step: Email → Code verify → 2FA verify → Set password
+         * - Requires 2FA (TOTP) or backup code before allowing reset
+         * - Honeypot (bot trap)
+         * - Rate limit handling (429 countdown)
+         * - Code attempt tracking (max 5)
+         * - Password strength + confirm match
+         * - Resend with cooldown
+         * - noindex/nofollow
+         * - Audit trail warning
+         *
+         * Server endpoints:
+         * - POST /api/auth/forgot-password      → { email }
+         *   Returns 200 always
+         * - POST /api/auth/verify-reset          → { email, code }
+         *   Returns { reset_token, requires_2fa: true|false }
+         * - POST /api/auth/verify-reset-2fa      → { reset_token, code|backup_code }
+         *   Returns { reset_token } (upgraded token)
+         * - POST /api/auth/reset-password        → { reset_token, new_password }
+         *   Returns 200 on success
+         *
+         * TODO: Set API_BASE below.
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = 'login.html';
+        const MAX_CODE_ATTEMPTS = 5;
+
+        let currentEmail = '';
+        let resetToken = null;
+        let codeAttempts = 0;
+        let resendCooldown = 0;
+
+        // ─── Step navigation ───
+
+        function goToStep(step) {
+            document.getElementById('emailForm').style.display = step === 1 ? 'flex' : 'none';
+            document.getElementById('codeForm').style.display = step === 2 ? 'flex' : 'none';
+            document.getElementById('totpForm').style.display = step === 3 ? 'flex' : 'none';
+            document.getElementById('backupForm').style.display = step === '3b' ? 'flex' : 'none';
+            document.getElementById('resetForm').style.display = step === 4 ? 'flex' : 'none';
+
+            const stepNum = step === '3b' ? 3 : step;
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`dot${i}`).className = 'step-dot' +
+                    (i < stepNum ? ' done' : i === stepNum ? ' active' : '');
+            }
+
+            const labels = {
+                1: 'Step 1 of 4 — Email',
+                2: 'Step 2 of 4 — Email code',
+                3: 'Step 3 of 4 — 2FA verification',
+                '3b': 'Step 3 of 4 — Backup code',
+                4: 'Step 4 of 4 — New password'
+            };
+            document.getElementById('stepLabel').textContent = labels[step] || '';
+        }
+
+        // ─── Helpers ───
+
+        function showError(elId, msg) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.classList.add('show');
+        }
+
+        function hideError(elId) {
+            document.getElementById(elId).classList.remove('show');
+        }
+
+        // ─── Password strength ───
+
+        const reqs = {
+            len: (v) => v.length >= 8,
+            upper: (v) => /[A-Z]/.test(v),
+            lower: (v) => /[a-z]/.test(v),
+            num: (v) => /\d/.test(v),
+            special: (v) => /[^A-Za-z0-9]/.test(v)
+        };
+
+        document.getElementById('newPassword').addEventListener('input', (e) => {
+            const val = e.target.value;
+            let score = 0;
+            Object.entries(reqs).forEach(([key, fn]) => {
+                const met = fn(val);
+                if (met) score++;
+                document.getElementById(`req-${key}`).classList.toggle('met', met);
+            });
+            const pct = val.length === 0 ? 0 : Math.min(score / 5 * 100, 100);
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#22c55e', '#22c55e'];
+            document.getElementById('strengthFill').style.width = pct + '%';
+            document.getElementById('strengthFill').style.background = colors[Math.min(score, 4)] || '#262626';
+            updateMatch();
+        });
+
+        function updateMatch() {
+            const pass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const el = document.getElementById('matchIndicator');
+            if (!confirm) { el.classList.remove('show'); return; }
+            el.classList.add('show');
+            if (pass === confirm) {
+                el.textContent = 'Passwords match';
+                el.className = 'match-indicator show match';
+            } else {
+                el.textContent = 'Passwords do not match';
+                el.className = 'match-indicator show no-match';
+            }
+        }
+
+        document.getElementById('confirmPassword').addEventListener('input', updateMatch);
+
+        // ─── Step 1: Email ───
+
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('emailError');
+            document.getElementById('emailWarning').classList.remove('show');
+            const btn = document.getElementById('emailBtn');
+
+            const email = document.getElementById('email').value.trim();
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('emailError', 'Enter a valid email address.');
+                return;
+            }
+
+            const hp = document.querySelector('input[name="website"]');
+            if (hp && hp.value) {
+                await new Promise(r => setTimeout(r, 2000));
+                showError('emailError', 'Request failed.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (res.status === 429) {
+                    const data = await res.json().catch(() => ({}));
+                    const secs = data.retry_after || 60;
+                    const warnEl = document.getElementById('emailWarning');
+                    warnEl.classList.add('show');
+                    let remaining = secs;
+                    const timer = setInterval(() => {
+                        remaining--;
+                        if (remaining <= 0) {
+                            clearInterval(timer);
+                            warnEl.classList.remove('show');
+                            btn.disabled = false;
+                            btn.textContent = 'Continue';
+                        } else {
+                            warnEl.innerHTML = `Too many requests. Wait <span class="countdown">${remaining}s</span>`;
+                        }
+                    }, 1000);
+                    warnEl.innerHTML = `Too many requests. Wait <span class="countdown">${remaining}s</span>`;
+                    return;
+                }
+
+                currentEmail = email;
+                document.getElementById('sentToEmail').textContent = email;
+                goToStep(2);
+                document.getElementById('resetCode').focus();
+            } catch (err) {
+                showError('emailError', 'Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Continue';
+            }
+        });
+
+        // ─── Step 2: Code verify ───
+
+        document.getElementById('codeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('codeError');
+            const btn = document.getElementById('codeBtn');
+
+            const code = document.getElementById('resetCode').value.trim();
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('codeError', 'Enter a valid 6-digit code.');
+                return;
+            }
+
+            codeAttempts++;
+            if (codeAttempts > MAX_CODE_ATTEMPTS) {
+                showError('codeError', 'Too many attempts. Request a new code.');
+                return;
+            }
+
+            document.getElementById('codeAttempts').textContent =
+                `${MAX_CODE_ATTEMPTS - codeAttempts} attempt${MAX_CODE_ATTEMPTS - codeAttempts !== 1 ? 's' : ''} remaining`;
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentEmail, code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('codeError', data.error || 'Invalid or expired code.');
+                    document.getElementById('resetCode').value = '';
+                    document.getElementById('resetCode').focus();
+                    return;
+                }
+
+                resetToken = data.reset_token;
+
+                if (data.requires_2fa) {
+                    goToStep(3);
+                    document.getElementById('totpCode').focus();
+                } else {
+                    goToStep(4);
+                    document.getElementById('newPassword').focus();
+                }
+            } catch (err) {
+                showError('codeError', 'Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify';
+            }
+        });
+
+        // Resend
+        document.getElementById('resendLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const link = e.target;
+            if (resendCooldown > 0) return;
+            link.classList.add('disabled');
+            codeAttempts = 0;
+            document.getElementById('codeAttempts').textContent = '';
+
+            try {
+                await fetch(`${API_BASE}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentEmail })
+                });
+            } catch { /* ignore */ }
+
+            resendCooldown = 60;
+            const timer = setInterval(() => {
+                resendCooldown--;
+                if (resendCooldown <= 0) {
+                    clearInterval(timer);
+                    link.textContent = 'Resend code';
+                    link.classList.remove('disabled');
+                } else {
+                    link.textContent = `Resend code (${resendCooldown}s)`;
+                }
+            }, 1000);
+            link.textContent = `Resend code (${resendCooldown}s)`;
+        });
+
+        // ─── Step 3: 2FA ───
+
+        document.getElementById('totpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('totpError');
+            const btn = document.getElementById('totpBtn');
+
+            const code = document.getElementById('totpCode').value.trim();
+            if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+                showError('totpError', 'Enter a valid 6-digit code.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-reset-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reset_token: resetToken, code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('totpError', data.error || 'Invalid code.');
+                    document.getElementById('totpCode').value = '';
+                    document.getElementById('totpCode').focus();
+                    return;
+                }
+
+                resetToken = data.reset_token;
+                goToStep(4);
+                document.getElementById('newPassword').focus();
+            } catch (err) {
+                showError('totpError', 'Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify Identity';
+            }
+        });
+
+        // Backup code
+        document.getElementById('useBackupCode').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('totpForm').style.display = 'none';
+            document.getElementById('backupForm').style.display = 'flex';
+            document.getElementById('stepLabel').textContent = 'Step 3 of 4 — Backup code';
+            document.getElementById('backupCode').focus();
+        });
+
+        document.getElementById('backToTotp').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('backupForm').style.display = 'none';
+            document.getElementById('totpForm').style.display = 'flex';
+            document.getElementById('stepLabel').textContent = 'Step 3 of 4 — 2FA verification';
+            document.getElementById('totpCode').focus();
+        });
+
+        document.getElementById('backupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('backupError');
+            const btn = document.getElementById('backupBtn');
+
+            const code = document.getElementById('backupCode').value.trim().toUpperCase();
+            if (code.length !== 8) {
+                showError('backupError', 'Enter a valid 8-character code.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/verify-reset-2fa`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reset_token: resetToken, backup_code: code })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('backupError', data.error || 'Invalid backup code.');
+                    document.getElementById('backupCode').value = '';
+                    document.getElementById('backupCode').focus();
+                    return;
+                }
+
+                resetToken = data.reset_token;
+                goToStep(4);
+                document.getElementById('newPassword').focus();
+            } catch (err) {
+                showError('backupError', 'Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Verify Backup Code';
+            }
+        });
+
+        // ─── Step 4: New password ───
+
+        document.getElementById('resetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError('resetError');
+            const btn = document.getElementById('resetBtn');
+
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (newPassword.length < 8) {
+                showError('resetError', 'Password must be at least 8 characters.');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showError('resetError', 'Passwords do not match.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Resetting...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reset_token: resetToken, new_password: newPassword })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showError('resetError', data.error || 'Reset failed.');
+                    return;
+                }
+
+                const successEl = document.getElementById('resetSuccess');
+                successEl.textContent = 'Password reset! Redirecting to login...';
+                successEl.classList.add('show');
+                document.getElementById('dot4').className = 'step-dot done';
+                document.getElementById('stepLabel').textContent = 'Complete';
+                setTimeout(() => { window.location.href = LOGIN_URL; }, 2000);
+            } catch (err) {
+                showError('resetError', 'Connection error.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Reset Password';
+            }
+        });
+    </script>
+</body>
+</html>
