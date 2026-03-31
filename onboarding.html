@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 520px; padding: 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 32px;
+            overflow: hidden;
+        }
+
+        @media (max-width: 480px) {
+            .card { padding: 28px 18px; }
+        }
+
+        /* Progress */
+        .progress { display: flex; justify-content: center; gap: 24px; margin-bottom: 32px; }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: background 0.3s, transform 0.3s;
+        }
+
+        .progress-step.active .progress-dot { background: var(--accent); transform: scale(1.3); }
+        .progress-step.done .progress-dot { background: var(--accent); }
+
+        .progress-label {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: color 0.3s;
+            white-space: nowrap;
+        }
+
+        .progress-step.active .progress-label { color: var(--accent); }
+        .progress-step.done .progress-label { color: var(--text-muted); }
+
+        @media (max-width: 380px) {
+            .progress { gap: 14px; }
+            .progress-label { font-size: 0.58rem; }
+        }
+
+        /* Steps */
+        .steps-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step {
+            display: none;
+            animation: slideIn 0.35s ease;
+        }
+
+        .step.active { display: block; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideOut {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-30px); }
+        }
+
+        .step-header { text-align: center; margin-bottom: 24px; }
+        .step-header h2 { font-size: 1.3rem; font-weight: 600; }
+        .step-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 8px; line-height: 1.5; }
+
+        .step-icon {
+            font-size: 2.2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* Form elements */
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: var(--accent); }
+
+        /* Avatar upload */
+        .avatar-upload {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--bg-input);
+            border: 2px dashed var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-upload:hover { border-color: var(--accent); }
+
+        .avatar-upload .placeholder {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Toggle rows */
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .toggle-row + .toggle-row { border-top: 1px solid var(--border); }
+
+        .toggle-label { display: flex; flex-direction: column; gap: 2px; }
+        .toggle-label .name { font-size: 0.85rem; font-weight: 500; }
+        .toggle-label .desc { font-size: 0.75rem; color: var(--text-muted); }
+
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle input:checked + .toggle-track { background: var(--accent); }
+        .toggle input:checked + .toggle-track::after { transform: translateX(20px); background: var(--accent-text); }
+
+        /* Theme picker */
+        .theme-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .theme-option { flex: 1; min-width: 0; }
+        .theme-option input { display: none; }
+
+        .theme-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 8px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .theme-option input:checked + label { border-color: var(--accent); color: var(--accent); }
+
+        /* Success step */
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.15);
+            border: 2px solid var(--color-success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 1.6rem;
+            animation: popIn 0.4s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .quick-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .quick-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            transition: border-color 0.2s;
+        }
+
+        .quick-link:hover { border-color: var(--border-hover); }
+        .quick-link .arrow { color: var(--text-dim); }
+
+        /* Nav buttons */
+        .step-nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 28px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-secondary {
+            padding: 12px 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+
+        .btn-skip {
+            padding: 12px 16px;
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .btn-skip:hover { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Progress -->
+            <div class="progress" id="progress">
+                <div class="progress-step active" data-step="0">
+                    <div class="progress-dot"></div>
+                    <div class="progress-label">Welcome</div>
+                </div>
+                <div class="progress-step" data-step="1">
+                    <div class="progress-dot"></div>
+                    <div class="progress-label">Profile</div>
+                </div>
+                <div class="progress-step" data-step="2">
+                    <div class="progress-dot"></div>
+                    <div class="progress-label">Preferences</div>
+                </div>
+                <div class="progress-step" data-step="3">
+                    <div class="progress-dot"></div>
+                    <div class="progress-label">Done</div>
+                </div>
+            </div>
+
+            <div class="steps-wrapper">
+                <!-- Step 1: Welcome -->
+                <div class="step active" data-step="0">
+                    <div class="step-header">
+                        <span class="step-icon">&#128075;</span>
+                        <h2>Welcome, <span id="userName">there</span>!</h2>
+                        <p>We're glad you're here. This quick setup will help you get the most out of the platform. It only takes a minute.</p>
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn-primary" onclick="goTo(1)">Get Started</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn-skip" onclick="goTo(3)">Skip setup</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Profile -->
+                <div class="step" data-step="1">
+                    <div class="step-header">
+                        <h2>Set up your profile</h2>
+                        <p>Tell us a bit about yourself.</p>
+                    </div>
+                    <div class="avatar-upload" id="avatarUpload" title="Upload avatar">
+                        <span class="placeholder">Upload<br>photo</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="displayName">Display Name</label>
+                        <input type="text" id="displayName" placeholder="How should we call you?" maxlength="50">
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn-secondary" onclick="goTo(0)">Back</button>
+                        <button class="btn-primary" onclick="saveStep(1); goTo(2)">Next</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn-skip" onclick="goTo(2)">Skip</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Preferences -->
+                <div class="step" data-step="2">
+                    <div class="step-header">
+                        <h2>Preferences</h2>
+                        <p>Customize your experience.</p>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="name">Email Notifications</span>
+                            <span class="desc">Get updates in your inbox</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="prefEmail" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="name">Push Notifications</span>
+                            <span class="desc">Browser alerts</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="prefPush" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <label style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;">Theme</label>
+                        <div class="theme-options">
+                            <div class="theme-option">
+                                <input type="radio" name="obTheme" id="obDark" value="dark" checked>
+                                <label for="obDark">&#9789; Dark</label>
+                            </div>
+                            <div class="theme-option">
+                                <input type="radio" name="obTheme" id="obLight" value="light">
+                                <label for="obLight">&#9788; Light</label>
+                            </div>
+                            <div class="theme-option">
+                                <input type="radio" name="obTheme" id="obSystem" value="system">
+                                <label for="obSystem">&#9881; System</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="step-nav">
+                        <button class="btn-secondary" onclick="goTo(1)">Back</button>
+                        <button class="btn-primary" onclick="saveStep(2); goTo(3)">Next</button>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn-skip" onclick="goTo(3)">Skip</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Done -->
+                <div class="step" data-step="3">
+                    <div class="step-header">
+                        <div class="success-icon">&#10003;</div>
+                        <h2>You're all set!</h2>
+                        <p>Your account is ready. Here are some things you can do next.</p>
+                    </div>
+                    <div class="quick-links">
+                        <a href="/dashboard" class="quick-link">
+                            <span>Go to Dashboard</span>
+                            <span class="arrow">&#8250;</span>
+                        </a>
+                        <a href="/index.html" class="quick-link">
+                            <span>Read the Docs</span>
+                            <span class="arrow">&#8250;</span>
+                        </a>
+                        <a href="account/invite.html" class="quick-link">
+                            <span>Invite your team</span>
+                            <span class="arrow">&#8250;</span>
+                        </a>
+                    </div>
+                    <div class="step-nav" style="margin-top: 20px;">
+                        <button class="btn-primary" onclick="finishOnboarding()">Go to Dashboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = '/api';
+        let currentStep = 0;
+        let avatarFile = null;
+
+        function goTo(step) {
+            const prev = document.querySelector('.step.active');
+            if (prev) {
+                prev.style.animation = 'slideOut 0.2s ease forwards';
+                setTimeout(() => {
+                    prev.classList.remove('active');
+                    prev.style.animation = '';
+                    showStep(step);
+                }, 200);
+            } else {
+                showStep(step);
+            }
+        }
+
+        function showStep(step) {
+            currentStep = step;
+            const el = document.querySelector(`.step[data-step="${step}"]`);
+            el.classList.add('active');
+            el.style.animation = 'slideIn 0.35s ease';
+
+            document.querySelectorAll('.progress-step').forEach(ps => {
+                const s = parseInt(ps.dataset.step);
+                ps.classList.remove('active', 'done');
+                if (s === step) ps.classList.add('active');
+                else if (s < step) ps.classList.add('done');
+            });
+        }
+
+        async function saveStep(step) {
+            const data = {};
+
+            if (step === 1) {
+                data.display_name = document.getElementById('displayName').value.trim();
+                if (avatarFile) {
+                    const form = new FormData();
+                    form.append('avatar', avatarFile);
+                    try {
+                        await fetch(`${API_BASE}/auth/profile/avatar`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            body: form
+                        });
+                    } catch {}
+                }
+            }
+
+            if (step === 2) {
+                data.notifications_email = document.getElementById('prefEmail').checked;
+                data.notifications_push = document.getElementById('prefPush').checked;
+                data.theme = document.querySelector('input[name="obTheme"]:checked').value;
+            }
+
+            try {
+                await fetch(`${API_BASE}/auth/onboarding`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ step, data })
+                });
+            } catch {}
+        }
+
+        function finishOnboarding() {
+            saveStep(3);
+            window.location.href = '/dashboard';
+        }
+
+        // Avatar upload
+        document.getElementById('avatarUpload').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.addEventListener('change', () => {
+                const file = input.files[0];
+                if (!file) return;
+                avatarFile = file;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const el = document.getElementById('avatarUpload');
+                    el.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = 'Avatar';
+                    el.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+            input.click();
+        });
+
+        // Theme preview
+        document.querySelectorAll('input[name="obTheme"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const val = radio.value;
+                if (val === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                } else if (val === 'dark') {
+                    document.documentElement.removeAttribute('data-theme');
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) document.documentElement.removeAttribute('data-theme');
+                    else document.documentElement.setAttribute('data-theme', 'light');
+                }
+            });
+        });
+
+        // Load user name
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/auth/profile`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.display_name || data.username) {
+                    document.getElementById('userName').textContent = data.display_name || data.username;
+                }
+            } catch {}
+        })();
+    </script>
+</body>
+</html>

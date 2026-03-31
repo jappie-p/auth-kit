@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .page-layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+            gap: 48px;
+        }
+
+        @media (max-width: 768px) {
+            .page-layout {
+                grid-template-columns: 1fr;
+                gap: 0;
+                padding: 20px 16px 60px;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 40px;
+            align-self: start;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 16px;
+                margin-bottom: 24px;
+            }
+        }
+
+        .toc-toggle {
+            display: none;
+            width: 100%;
+            padding: 10px 0;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+        }
+        .toc-toggle::after {
+            content: ' +';
+            color: var(--text-muted);
+        }
+        .toc-toggle.open::after { content: ' -'; }
+
+        @media (max-width: 768px) {
+            .toc-toggle { display: block; }
+            .toc-list { display: none; }
+            .toc-list.open { display: block; }
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+        }
+        .toc-list li { margin-bottom: 2px; }
+        .toc-list a {
+            display: block;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.15s;
+            line-height: 1.4;
+        }
+        .toc-list a:hover {
+            color: var(--text-primary);
+            background: var(--bg-card);
+        }
+
+        /* Content */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--text-primary); }
+
+        .content h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .updated {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            margin-bottom: 32px;
+        }
+
+        .content h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin-top: 40px;
+            margin-bottom: 12px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            scroll-margin-top: 20px;
+        }
+        .content h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+
+        .content h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 8px;
+        }
+
+        .content p, .content ul, .content ol {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+        }
+        .content ul, .content ol { padding-left: 20px; }
+        .content li { margin-bottom: 4px; }
+
+        .placeholder {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .related-link {
+            display: inline-block;
+            margin-top: 32px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .related-link:hover { text-decoration: underline; }
+
+        @media print {
+            .sidebar { display: none; }
+            .page-layout { grid-template-columns: 1fr; padding: 20px; }
+            body { background: #fff; color: #000; }
+            .content h2 { border-top-color: #ccc; }
+            .content p, .content ul, .content ol { color: #333; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-layout">
+        <nav class="sidebar">
+            <button class="toc-toggle" id="tocToggle">Table of Contents</button>
+            <ol class="toc-list" id="tocList">
+                <li><a href="#acceptance">1. Acceptance of Terms</a></li>
+                <li><a href="#accounts">2. User Accounts</a></li>
+                <li><a href="#usage">3. Acceptable Use</a></li>
+                <li><a href="#ip">4. Intellectual Property</a></li>
+                <li><a href="#payment">5. Payment & Billing</a></li>
+                <li><a href="#termination">6. Termination</a></li>
+                <li><a href="#liability">7. Limitation of Liability</a></li>
+                <li><a href="#indemnification">8. Indemnification</a></li>
+                <li><a href="#changes">9. Changes to Terms</a></li>
+                <li><a href="#governing">10. Governing Law</a></li>
+                <li><a href="#contact">11. Contact</a></li>
+            </ol>
+        </nav>
+
+        <main class="content">
+            <a href="../index.html" class="back-link">&larr; Back to home</a>
+            <h1>Terms of Service</h1>
+            <p class="updated">Last updated: <span class="placeholder">[Date]</span></p>
+
+            <h2 id="acceptance">1. Acceptance of Terms</h2>
+            <p>By accessing or using <span class="placeholder">[Service Name]</span> ("Service"), you agree to be bound by these Terms of Service. If you do not agree, you may not use the Service.</p>
+
+            <h2 id="accounts">2. User Accounts</h2>
+            <p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials.</p>
+            <ul>
+                <li>You must be at least <span class="placeholder">[minimum age]</span> years old to use this Service.</li>
+                <li>You are responsible for all activity under your account.</li>
+                <li>You must notify us immediately of any unauthorized use.</li>
+            </ul>
+
+            <h2 id="usage">3. Acceptable Use</h2>
+            <p>You agree not to use the Service to:</p>
+            <ul>
+                <li>Violate any applicable laws or regulations.</li>
+                <li>Infringe on the rights of others.</li>
+                <li>Distribute malware or harmful code.</li>
+                <li>Attempt to gain unauthorized access to any systems.</li>
+                <li><span class="placeholder">[Additional prohibited uses]</span></li>
+            </ul>
+
+            <h2 id="ip">4. Intellectual Property</h2>
+            <p>All content, trademarks, and intellectual property on the Service are owned by <span class="placeholder">[Company Name]</span> or its licensors. You may not reproduce, distribute, or create derivative works without prior written consent.</p>
+
+            <h2 id="payment">5. Payment & Billing</h2>
+            <p>Paid plans are billed <span class="placeholder">[monthly/annually]</span>. All fees are non-refundable except as required by law or as stated in our refund policy.</p>
+            <ul>
+                <li>Prices may change with <span class="placeholder">[notice period]</span> notice.</li>
+                <li>Failed payments may result in service suspension.</li>
+            </ul>
+
+            <h2 id="termination">6. Termination</h2>
+            <p>We may suspend or terminate your access to the Service at any time for violation of these Terms. You may cancel your account at any time through <span class="placeholder">[account settings / contacting support]</span>.</p>
+
+            <h2 id="liability">7. Limitation of Liability</h2>
+            <p>The Service is provided "as is" without warranties of any kind. <span class="placeholder">[Company Name]</span> shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service.</p>
+
+            <h2 id="indemnification">8. Indemnification</h2>
+            <p>You agree to indemnify and hold harmless <span class="placeholder">[Company Name]</span> from any claims, damages, or expenses arising from your use of the Service or violation of these Terms.</p>
+
+            <h2 id="changes">9. Changes to Terms</h2>
+            <p>We may update these Terms at any time. Continued use of the Service after changes constitutes acceptance of the new Terms. Material changes will be communicated via <span class="placeholder">[email / in-app notification]</span>.</p>
+
+            <h2 id="governing">10. Governing Law</h2>
+            <p>These Terms are governed by the laws of <span class="placeholder">[jurisdiction]</span>. Any disputes shall be resolved in the courts of <span class="placeholder">[jurisdiction]</span>.</p>
+
+            <h2 id="contact">11. Contact</h2>
+            <p>For questions about these Terms, contact us at <span class="placeholder">[email address]</span>.</p>
+
+            <a href="privacy.html" class="related-link">Read our Privacy Policy &rarr;</a>
+        </main>
+    </div>
+
+    <script>
+        var toggle = document.getElementById('tocToggle');
+        var list = document.getElementById('tocList');
+        toggle.addEventListener('click', function() {
+            toggle.classList.toggle('open');
+            list.classList.toggle('open');
+        });
+    </script>
+</body>
+</html>

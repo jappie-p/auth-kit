@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search — Data Table</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .table-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-title { font-size: 1.25rem; font-weight: 600; }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Search bar */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            transition: border-color 0.2s;
+        }
+
+        .search-bar:focus-within { border-color: var(--accent); }
+        .search-bar .icon { color: var(--text-dim); font-size: 0.85rem; }
+
+        .search-bar input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            width: 180px;
+        }
+
+        .search-bar input::placeholder { color: var(--text-dim); }
+
+        .btn-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: border-color 0.2s;
+        }
+
+        .btn-icon:hover { border-color: var(--border-hover); }
+        .btn-icon.active { border-color: var(--accent); color: var(--accent); }
+
+        /* Filters row */
+        .active-filters {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .active-filters:empty { display: none; }
+
+        .filter-tag {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .filter-tag .remove {
+            cursor: pointer;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-left: 2px;
+        }
+
+        .filter-tag .remove:hover { color: var(--color-error); }
+
+        /* Filter panel */
+        .filter-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .filter-panel.show { display: block; }
+
+        .filter-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+
+        .filter-group select, .filter-group input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-family: inherit;
+            padding: 6px 10px;
+        }
+
+        .filter-group select:focus, .filter-group input:focus { outline: none; border-color: var(--accent); }
+
+        .btn-apply {
+            padding: 6px 14px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            align-self: end;
+        }
+
+        .btn-apply:hover { opacity: 0.9; }
+
+        /* Table */
+        .data-table {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-input);
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .data-table th:hover { color: var(--text-secondary); }
+
+        .data-table th .sort-arrow {
+            margin-left: 4px;
+            font-size: 0.65rem;
+            color: var(--text-faint);
+        }
+
+        .data-table th .sort-arrow.active { color: var(--accent); }
+
+        .data-table td {
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--bg-input); }
+
+        .data-table td mark {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-dot.active { background: var(--color-success); }
+        .status-dot.inactive { background: var(--text-dim); }
+        .status-dot.pending { background: var(--color-warning); }
+
+        .data-table .checkbox {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        /* Footer */
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .table-info {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 4px;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .page-btn:hover { border-color: var(--border-hover); }
+        .page-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .per-page {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .per-page select {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            font-family: inherit;
+            padding: 4px 8px;
+        }
+
+        .table-perf {
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        /* Loading */
+        .table-loading td {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-dim);
+        }
+
+        /* Selected row */
+        .data-table tr.selected td { background: rgba(59, 130, 246, 0.05); }
+
+        /* Bulk actions */
+        .bulk-bar {
+            background: var(--accent);
+            color: var(--accent-text);
+            border-radius: 10px;
+            padding: 10px 16px;
+            margin-bottom: 12px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .bulk-bar.show { display: flex; }
+
+        .bulk-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bulk-btn {
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 6px;
+            color: var(--accent-text);
+            font-size: 0.8rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .bulk-btn:hover { background: rgba(255,255,255,0.3); }
+        .bulk-btn.danger { background: rgba(239, 68, 68, 0.8); }
+
+        /* Export menu */
+        .export-menu {
+            position: relative;
+            display: inline-block;
+        }
+
+        .export-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 4px;
+            display: none;
+            z-index: 10;
+            min-width: 120px;
+        }
+
+        .export-dropdown.show { display: block; }
+
+        .export-option {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+
+        .export-option:hover { background: var(--bg-input); }
+    </style>
+</head>
+<body>
+    <div class="table-container">
+        <div class="table-header">
+            <h1 class="table-title">Users</h1>
+            <div class="table-actions">
+                <div class="search-bar">
+                    <span class="icon">&#128270;</span>
+                    <input type="text" id="searchInput" placeholder="Search users..." maxlength="200" autocomplete="off">
+                </div>
+                <button class="btn-icon" id="filterToggle" title="Filters">&#9881;</button>
+                <div class="export-menu">
+                    <button class="btn-icon" id="exportBtn" title="Export">&#8615;</button>
+                    <div class="export-dropdown" id="exportDropdown">
+                        <button class="export-option" data-format="csv">Export CSV</button>
+                        <button class="export-option" data-format="json">Export JSON</button>
+                        <button class="export-option" data-format="clipboard">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-panel" id="filterPanel">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="filterStatus">
+                        <option value="">All</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Role</label>
+                    <select id="filterRole">
+                        <option value="">All</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Created after</label>
+                    <input type="date" id="filterDate">
+                </div>
+                <button class="btn-apply" id="applyFilters">Apply</button>
+            </div>
+        </div>
+
+        <div class="active-filters" id="activeFilters"></div>
+
+        <div class="bulk-bar" id="bulkBar">
+            <span id="bulkCount">0 selected</span>
+            <div class="bulk-actions">
+                <button class="bulk-btn" id="bulkExport">Export</button>
+                <button class="bulk-btn danger" id="bulkDelete">Delete</button>
+            </div>
+        </div>
+
+        <table class="data-table" id="dataTable">
+            <thead>
+                <tr>
+                    <th style="width: 32px;"><input type="checkbox" class="checkbox" id="selectAll"></th>
+                    <th data-sort="name">Name <span class="sort-arrow" id="sort-name">&#9650;</span></th>
+                    <th data-sort="email">Email <span class="sort-arrow" id="sort-email">&#9650;</span></th>
+                    <th data-sort="role">Role <span class="sort-arrow" id="sort-role">&#9650;</span></th>
+                    <th data-sort="status">Status <span class="sort-arrow" id="sort-status">&#9650;</span></th>
+                    <th data-sort="created">Created <span class="sort-arrow" id="sort-created">&#9650;</span></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr class="table-loading"><td colspan="6">Loading...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="table-footer">
+            <div class="table-info" id="tableInfo">Showing 0 of 0</div>
+            <div class="pagination" id="pagination"></div>
+            <div class="per-page">
+                Show
+                <select id="perPage">
+                    <option value="10">10</option>
+                    <option value="25" selected>25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                per page
+            </div>
+        </div>
+
+        <div class="table-perf" id="tablePerf"></div>
+    </div>
+
+    <script>
+        /**
+         * DATA TABLE SEARCH
+         *
+         * Features:
+         * - Full text search with highlight
+         * - Column sorting (click headers)
+         * - Filter panel (status, role, date)
+         * - Active filter tags with remove
+         * - Pagination with per-page selector
+         * - Select all / individual row selection
+         * - Bulk actions (export, delete)
+         * - Export to CSV, JSON, or clipboard
+         * - Debounced search (300ms)
+         * - Input sanitization
+         * - Request abort on new search
+         * - Client-side cache (30s)
+         * - Performance timing
+         *
+         * Server endpoint:
+         * - GET /api/users?q=query&status=active&role=admin&after=date&sort=name&order=asc&page=1&limit=25
+         *   → { results: [{ id, name, email, role, status, created_at }], total, page, pages }
+         */
+
+        const API_BASE = '/api';
+        const ENDPOINT = '/users';
+        const DEBOUNCE_MS = 300;
+        const CACHE_TTL = 30000;
+
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('tableBody');
+        const tableInfo = document.getElementById('tableInfo');
+        const paginationEl = document.getElementById('pagination');
+        const perPageSelect = document.getElementById('perPage');
+        const bulkBar = document.getElementById('bulkBar');
+        const bulkCount = document.getElementById('bulkCount');
+        const filterPanel = document.getElementById('filterPanel');
+        const activeFiltersEl = document.getElementById('activeFilters');
+        const exportDropdown = document.getElementById('exportDropdown');
+        const perfEl = document.getElementById('tablePerf');
+
+        let debounceTimer = null;
+        let abortController = null;
+        let currentSort = { field: 'name', order: 'asc' };
+        let currentPage = 1;
+        let currentData = [];
+        let selectedIds = new Set();
+        let activeFilterState = {};
+        const cache = new Map();
+
+        function sanitize(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function highlight(text, query) {
+            if (!query) return sanitize(text);
+            const safe = sanitize(text);
+            const safeQ = sanitize(query);
+            const regex = new RegExp('(' + safeQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return safe.replace(regex, '<mark>$1</mark>');
+        }
+
+        function buildParams() {
+            const params = new URLSearchParams();
+            const q = searchInput.value.trim();
+            if (q) params.set('q', q);
+            if (activeFilterState.status) params.set('status', activeFilterState.status);
+            if (activeFilterState.role) params.set('role', activeFilterState.role);
+            if (activeFilterState.after) params.set('after', activeFilterState.after);
+            params.set('sort', currentSort.field);
+            params.set('order', currentSort.order);
+            params.set('page', currentPage);
+            params.set('limit', perPageSelect.value);
+            return params;
+        }
+
+        function renderTable(results, total, page, pages, query, time, fromCache) {
+            currentData = results;
+            const tbody = tableBody;
+            tbody.innerHTML = '';
+
+            if (!results.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-dim);">No results found</td></tr>';
+                tableInfo.textContent = '0 results';
+                paginationEl.innerHTML = '';
+                perfEl.textContent = '';
+                return;
+            }
+
+            results.forEach(r => {
+                const tr = document.createElement('tr');
+                if (selectedIds.has(r.id)) tr.classList.add('selected');
+
+                const statusClass = r.status === 'active' ? 'active' : r.status === 'pending' ? 'pending' : 'inactive';
+
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="checkbox row-check" data-id="${r.id}" ${selectedIds.has(r.id) ? 'checked' : ''}></td>
+                    <td>${highlight(r.name || '', query)}</td>
+                    <td>${highlight(r.email || '', query)}</td>
+                    <td>${sanitize(r.role || '')}</td>
+                    <td><span class="status-dot ${statusClass}"></span>${sanitize(r.status || '')}</td>
+                    <td>${r.created_at ? new Date(r.created_at).toLocaleDateString() : ''}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Info
+            const start = (page - 1) * parseInt(perPageSelect.value) + 1;
+            const end = Math.min(start + results.length - 1, total);
+            tableInfo.textContent = `Showing ${start}-${end} of ${total}`;
+
+            // Pagination
+            paginationEl.innerHTML = '';
+            const prev = document.createElement('button');
+            prev.className = 'page-btn';
+            prev.textContent = '\u2039';
+            prev.disabled = page <= 1;
+            prev.addEventListener('click', () => { currentPage--; fetchData(); });
+            paginationEl.appendChild(prev);
+
+            for (let i = 1; i <= Math.min(pages, 7); i++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn' + (i === page ? ' active' : '');
+                btn.textContent = i;
+                btn.addEventListener('click', () => { currentPage = i; fetchData(); });
+                paginationEl.appendChild(btn);
+            }
+
+            const next = document.createElement('button');
+            next.className = 'page-btn';
+            next.textContent = '\u203A';
+            next.disabled = page >= pages;
+            next.addEventListener('click', () => { currentPage++; fetchData(); });
+            paginationEl.appendChild(next);
+
+            // Perf
+            perfEl.textContent = (fromCache ? 'Cached' : time + 'ms') + ' \u2022 ' + total + ' total';
+
+            // Checkboxes
+            tbody.querySelectorAll('.row-check').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const id = cb.dataset.id;
+                    if (cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+                    cb.closest('tr').classList.toggle('selected', cb.checked);
+                    updateBulkBar();
+                });
+            });
+        }
+
+        function updateBulkBar() {
+            const count = selectedIds.size;
+            bulkBar.classList.toggle('show', count > 0);
+            bulkCount.textContent = count + ' selected';
+        }
+
+        async function fetchData() {
+            const params = buildParams();
+            const cacheKey = params.toString();
+            const cached = cache.get(cacheKey);
+            if (cached && Date.now() - cached.time < CACHE_TTL) {
+                renderTable(cached.data.results, cached.data.total, cached.data.page, cached.data.pages, searchInput.value.trim(), 0, true);
+                return;
+            }
+
+            if (abortController) abortController.abort();
+            abortController = new AbortController();
+
+            tableBody.innerHTML = '<tr class="table-loading"><td colspan="6">Loading...</td></tr>';
+
+            const start = performance.now();
+
+            try {
+                const res = await fetch(`${API_BASE}${ENDPOINT}?${params}`, {
+                    credentials: 'include',
+                    signal: abortController.signal
+                });
+
+                const data = await res.json();
+                const time = Math.round(performance.now() - start);
+
+                cache.set(cacheKey, { data, time: Date.now() });
+                renderTable(data.results || [], data.total || 0, data.page || 1, data.pages || 1, searchInput.value.trim(), time, false);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--color-error);">Failed to load data</td></tr>';
+                }
+            }
+        }
+
+        // Search
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            currentPage = 1;
+            debounceTimer = setTimeout(fetchData, DEBOUNCE_MS);
+        });
+
+        // Sort
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.sort;
+                if (currentSort.field === field) {
+                    currentSort.order = currentSort.order === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = { field, order: 'asc' };
+                }
+
+                document.querySelectorAll('.sort-arrow').forEach(a => { a.classList.remove('active'); a.innerHTML = '&#9650;'; });
+                const arrow = document.getElementById('sort-' + field);
+                arrow.classList.add('active');
+                arrow.innerHTML = currentSort.order === 'asc' ? '&#9650;' : '&#9660;';
+
+                currentPage = 1;
+                fetchData();
+            });
+        });
+
+        // Per page
+        perPageSelect.addEventListener('change', () => { currentPage = 1; fetchData(); });
+
+        // Select all
+        document.getElementById('selectAll').addEventListener('change', (e) => {
+            const checked = e.target.checked;
+            tableBody.querySelectorAll('.row-check').forEach(cb => {
+                cb.checked = checked;
+                const id = cb.dataset.id;
+                if (checked) selectedIds.add(id); else selectedIds.delete(id);
+                cb.closest('tr').classList.toggle('selected', checked);
+            });
+            updateBulkBar();
+        });
+
+        // Filter toggle
+        document.getElementById('filterToggle').addEventListener('click', () => {
+            filterPanel.classList.toggle('show');
+            document.getElementById('filterToggle').classList.toggle('active');
+        });
+
+        // Apply filters
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            activeFilterState = {};
+            const status = document.getElementById('filterStatus').value;
+            const role = document.getElementById('filterRole').value;
+            const date = document.getElementById('filterDate').value;
+
+            if (status) activeFilterState.status = status;
+            if (role) activeFilterState.role = role;
+            if (date) activeFilterState.after = date;
+
+            renderFilterTags();
+            currentPage = 1;
+            fetchData();
+        });
+
+        function renderFilterTags() {
+            activeFiltersEl.innerHTML = '';
+            Object.entries(activeFilterState).forEach(([key, val]) => {
+                const tag = document.createElement('span');
+                tag.className = 'filter-tag';
+                tag.innerHTML = `${key}: ${sanitize(val)} <span class="remove" data-key="${key}">&times;</span>`;
+                activeFiltersEl.appendChild(tag);
+            });
+
+            activeFiltersEl.querySelectorAll('.remove').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    delete activeFilterState[btn.dataset.key];
+                    renderFilterTags();
+                    currentPage = 1;
+                    fetchData();
+                });
+            });
+        }
+
+        // Export
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            exportDropdown.classList.toggle('show');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.export-menu')) exportDropdown.classList.remove('show');
+        });
+
+        document.querySelectorAll('.export-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const format = btn.dataset.format;
+                const data = currentData;
+
+                if (format === 'json') {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    downloadBlob(blob, 'export.json');
+                } else if (format === 'csv') {
+                    const headers = ['name', 'email', 'role', 'status', 'created_at'];
+                    const csv = [headers.join(','), ...data.map(r => headers.map(h => '"' + (r[h] || '').replace(/"/g, '""') + '"').join(','))].join('\n');
+                    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'export.csv');
+                } else if (format === 'clipboard') {
+                    const text = data.map(r => `${r.name}\t${r.email}\t${r.role}\t${r.status}`).join('\n');
+                    navigator.clipboard.writeText(text);
+                }
+
+                exportDropdown.classList.remove('show');
+            });
+        });
+
+        function downloadBlob(blob, filename) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        // Bulk actions
+        document.getElementById('bulkDelete').addEventListener('click', () => {
+            if (!confirm('Delete ' + selectedIds.size + ' items?')) return;
+            // POST /api/users/bulk-delete { ids: [...selectedIds] }
+            selectedIds.clear();
+            updateBulkBar();
+            fetchData();
+        });
+
+        document.getElementById('bulkExport').addEventListener('click', () => {
+            const selected = currentData.filter(r => selectedIds.has(r.id));
+            const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json' });
+            downloadBlob(blob, 'selected-export.json');
+        });
+
+        // Keyboard: "/" to focus
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement !== searchInput && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        fetchData();
+    </script>
+</body>
+</html>

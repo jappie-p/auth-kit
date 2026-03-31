@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Locked</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .error-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .error-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 48px 32px;
+        }
+
+        .error-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .error-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .lock-info {
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .lock-info .row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            padding: 4px 0;
+        }
+
+        .lock-info .row .label { color: var(--text-muted); }
+        .lock-info .row .value { color: var(--color-error); font-weight: 500; }
+
+        .error-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-secondary {
+            padding: 12px 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-card">
+            <div class="error-icon">&#128274;</div>
+            <div class="error-title">Account Locked</div>
+            <div class="error-desc">Your account has been locked due to too many failed login attempts or a security concern.</div>
+
+            <div class="lock-info">
+                <div class="row">
+                    <span class="label">Status</span>
+                    <span class="value" id="lockStatus">Locked</span>
+                </div>
+                <div class="row" id="lockTimerRow" style="display: none;">
+                    <span class="label">Unlocks in</span>
+                    <span class="value" id="lockTimer"></span>
+                </div>
+            </div>
+
+            <div class="error-actions">
+                <a href="/forgot-password" class="btn-primary">Reset Password</a>
+                <a href="/login" class="btn-secondary">Back to Login</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Set from server: seconds until unlock, or 0 for permanent
+        const UNLOCK_IN = 0; // e.g. 900 for 15 minutes
+
+        if (UNLOCK_IN > 0) {
+            let seconds = UNLOCK_IN;
+            const timerRow = document.getElementById('lockTimerRow');
+            const timerEl = document.getElementById('lockTimer');
+            const statusEl = document.getElementById('lockStatus');
+            timerRow.style.display = 'flex';
+            statusEl.textContent = 'Temporarily Locked';
+
+            function tick() {
+                if (seconds <= 0) {
+                    timerEl.textContent = 'Unlocked!';
+                    timerEl.style.color = 'var(--color-success)';
+                    statusEl.textContent = 'Unlocked';
+                    statusEl.style.color = 'var(--color-success)';
+                    return;
+                }
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                timerEl.textContent = mins > 0
+                    ? mins + ':' + secs.toString().padStart(2, '0')
+                    : secs + 's';
+                seconds--;
+                setTimeout(tick, 1000);
+            }
+            tick();
+        } else {
+            document.getElementById('lockStatus').textContent = 'Permanently Locked';
+        }
+    </script>
+</body>
+</html>

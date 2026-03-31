@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 520px; padding: 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 16px 0; }
+            .card { padding: 24px 18px; }
+        }
+
+        .header { margin-bottom: 28px; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; }
+        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+        .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); }
+
+        .section { margin-bottom: 28px; }
+        .section:last-of-type { margin-bottom: 0; }
+
+        .section-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .form-group input,
+        .form-group select {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+
+        .form-group select { cursor: pointer; }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: var(--accent); }
+
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .toggle-row + .toggle-row { border-top: 1px solid var(--border); }
+
+        .toggle-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .toggle-label .name { font-size: 0.85rem; font-weight: 500; color: var(--text-primary); }
+        .toggle-label .desc { font-size: 0.75rem; color: var(--text-muted); }
+
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            margin-left: 12px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .toggle-track {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-track::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 18px;
+            height: 18px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle input:checked + .toggle-track { background: var(--accent); }
+        .toggle input:checked + .toggle-track::after { transform: translateX(20px); background: var(--accent-text); }
+
+        .theme-options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .theme-option {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .theme-option input { display: none; }
+
+        .theme-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 10px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .theme-option input:checked + label { border-color: var(--accent); color: var(--accent); }
+        .theme-option label:hover { border-color: var(--border-hover); }
+
+        .theme-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .theme-dark .theme-icon { background: #1a1a1a; border: 1px solid #333; }
+        .theme-light .theme-icon { background: #f5f5f5; border: 1px solid #ddd; }
+        .theme-system .theme-icon { background: linear-gradient(135deg, #1a1a1a 50%, #f5f5f5 50%); border: 1px solid #666; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 28px 0;
+        }
+
+        .danger-zone .section-label { color: var(--color-error); border-color: rgba(239, 68, 68, 0.2); }
+
+        .danger-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-danger {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--color-error); }
+
+        .back-link { text-align: center; margin-top: 16px; }
+        .back-link a { color: var(--text-muted); font-size: 0.8rem; text-decoration: none; }
+        .back-link a:hover { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Settings</h1>
+                <p>Manage your app preferences</p>
+            </div>
+
+            <div class="alert" id="alert"></div>
+
+            <form id="settingsForm">
+                <!-- General -->
+                <div class="section">
+                    <div class="section-label">General</div>
+                    <div class="form-group">
+                        <label for="appName">App Name</label>
+                        <input type="text" id="appName" placeholder="My App" maxlength="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="timezone">Timezone</label>
+                        <select id="timezone">
+                            <option value="UTC">UTC</option>
+                            <option value="America/New_York">Eastern Time (US)</option>
+                            <option value="America/Chicago">Central Time (US)</option>
+                            <option value="America/Denver">Mountain Time (US)</option>
+                            <option value="America/Los_Angeles">Pacific Time (US)</option>
+                            <option value="Europe/London">London</option>
+                            <option value="Europe/Amsterdam">Amsterdam</option>
+                            <option value="Europe/Berlin">Berlin</option>
+                            <option value="Europe/Paris">Paris</option>
+                            <option value="Asia/Tokyo">Tokyo</option>
+                            <option value="Asia/Shanghai">Shanghai</option>
+                            <option value="Australia/Sydney">Sydney</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="language">Language</label>
+                        <select id="language">
+                            <option value="en">English</option>
+                            <option value="nl">Dutch</option>
+                            <option value="de">German</option>
+                            <option value="fr">French</option>
+                            <option value="es">Spanish</option>
+                            <option value="pt">Portuguese</option>
+                            <option value="ja">Japanese</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="section">
+                    <div class="section-label">Notifications</div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="name">Email Notifications</span>
+                            <span class="desc">Receive updates via email</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="notifEmail" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="name">Push Notifications</span>
+                            <span class="desc">Browser and mobile alerts</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="notifPush" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="name">Marketing Emails</span>
+                            <span class="desc">Product news and offers</span>
+                        </div>
+                        <label class="toggle">
+                            <input type="checkbox" id="notifMarketing">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Appearance -->
+                <div class="section">
+                    <div class="section-label">Appearance</div>
+                    <div class="theme-options">
+                        <div class="theme-option theme-dark">
+                            <input type="radio" name="theme" id="themeDark" value="dark" checked>
+                            <label for="themeDark">
+                                <div class="theme-icon">&#9789;</div>
+                                Dark
+                            </label>
+                        </div>
+                        <div class="theme-option theme-light">
+                            <input type="radio" name="theme" id="themeLight" value="light">
+                            <label for="themeLight">
+                                <div class="theme-icon">&#9788;</div>
+                                Light
+                            </label>
+                        </div>
+                        <div class="theme-option theme-system">
+                            <input type="radio" name="theme" id="themeSystem" value="system">
+                            <label for="themeSystem">
+                                <div class="theme-icon">&#9881;</div>
+                                System
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary" id="saveBtn">Save Settings</button>
+            </form>
+
+            <hr class="divider">
+
+            <!-- Danger Zone -->
+            <div class="section danger-zone">
+                <div class="section-label">Danger Zone</div>
+                <p class="danger-text">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                <button type="button" class="btn-danger" id="deleteBtn">Delete Account</button>
+            </div>
+
+            <div class="back-link"><a href="/dashboard">Back to Dashboard</a></div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = '/api';
+        const alertEl = document.getElementById('alert');
+
+        function showAlert(msg, type) {
+            alertEl.textContent = msg;
+            alertEl.className = 'alert show ' + type;
+            setTimeout(() => { alertEl.className = 'alert'; }, 5000);
+        }
+
+        // Apply theme preview
+        document.querySelectorAll('input[name="theme"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const val = radio.value;
+                if (val === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                } else if (val === 'dark') {
+                    document.documentElement.removeAttribute('data-theme');
+                } else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) {
+                        document.documentElement.removeAttribute('data-theme');
+                    } else {
+                        document.documentElement.setAttribute('data-theme', 'light');
+                    }
+                }
+            });
+        });
+
+        async function loadSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/auth/settings`, { credentials: 'include' });
+                if (!res.ok) return;
+                const data = await res.json();
+
+                if (data.app_name) document.getElementById('appName').value = data.app_name;
+                if (data.timezone) document.getElementById('timezone').value = data.timezone;
+                if (data.language) document.getElementById('language').value = data.language;
+
+                document.getElementById('notifEmail').checked = data.notifications_email !== false;
+                document.getElementById('notifPush').checked = data.notifications_push !== false;
+                document.getElementById('notifMarketing').checked = !!data.notifications_marketing;
+
+                if (data.theme) {
+                    const radio = document.querySelector(`input[name="theme"][value="${data.theme}"]`);
+                    if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change')); }
+                }
+            } catch {}
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        app_name: document.getElementById('appName').value.trim(),
+                        timezone: document.getElementById('timezone').value,
+                        language: document.getElementById('language').value,
+                        notifications_email: document.getElementById('notifEmail').checked,
+                        notifications_push: document.getElementById('notifPush').checked,
+                        notifications_marketing: document.getElementById('notifMarketing').checked,
+                        theme: document.querySelector('input[name="theme"]:checked').value
+                    })
+                });
+
+                if (res.ok) {
+                    showAlert('Settings saved.', 'success');
+                } else {
+                    const data = await res.json();
+                    showAlert(data.error || 'Failed to save settings.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save Settings';
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            const confirmed = confirm('Are you sure you want to delete your account? This cannot be undone.');
+            if (!confirmed) return;
+
+            const password = prompt('Enter your password to confirm:');
+            if (!password) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/delete-account`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ password })
+                });
+
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    const data = await res.json();
+                    showAlert(data.error || 'Failed to delete account.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+        });
+
+        loadSettings();
+    </script>
+</body>
+</html>

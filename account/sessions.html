@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Sessions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 480px; padding: 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; }
+        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
+
+        .session-list { display: flex; flex-direction: column; gap: 12px; }
+
+        .session {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .session.current { border-color: var(--accent); }
+
+        .session-info { flex: 1; min-width: 0; }
+
+        .session-device {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .session-device .current-badge {
+            font-size: 0.65rem;
+            background: var(--accent);
+            color: var(--accent-text);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .session-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .session-meta span { margin-right: 10px; }
+
+        .btn-revoke {
+            padding: 6px 12px;
+            background: transparent;
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-revoke:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--color-error); }
+
+        .btn-revoke-all {
+            margin-top: 16px;
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        .btn-revoke-all:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--color-error); }
+
+        .empty {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+        .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); }
+
+        .back-link { text-align: center; margin-top: 16px; }
+        .back-link a { color: var(--text-muted); font-size: 0.8rem; text-decoration: none; }
+        .back-link a:hover { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Active Sessions</h1>
+                <p>Manage your active sessions across devices</p>
+            </div>
+
+            <div class="alert" id="alert"></div>
+
+            <div class="session-list" id="sessionList">
+                <div class="loading">Loading sessions...</div>
+            </div>
+
+            <button class="btn-revoke-all" id="revokeAllBtn" style="display: none;">Revoke All Other Sessions</button>
+
+            <div class="back-link"><a href="/dashboard">Back to Dashboard</a></div>
+        </div>
+    </div>
+    <script>
+        /**
+         * ACTIVE SESSIONS PAGE
+         *
+         * Server endpoints:
+         * - GET  /api/auth/sessions      → { sessions: [{ id, device, browser, ip, location, last_active, current }] }
+         * - POST /api/auth/sessions/revoke     → { session_id }
+         * - POST /api/auth/sessions/revoke-all → revokes all except current
+         */
+
+        const API_BASE = '/api';
+
+        const sessionList = document.getElementById('sessionList');
+        const alertEl = document.getElementById('alert');
+        const revokeAllBtn = document.getElementById('revokeAllBtn');
+
+        function showAlert(msg, type) {
+            alertEl.textContent = msg;
+            alertEl.className = 'alert show ' + type;
+        }
+
+        function timeAgo(dateStr) {
+            const diff = Date.now() - new Date(dateStr).getTime();
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return 'Just now';
+            if (mins < 60) return mins + 'm ago';
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return hrs + 'h ago';
+            const days = Math.floor(hrs / 24);
+            return days + 'd ago';
+        }
+
+        function renderSessions(sessions) {
+            sessionList.innerHTML = '';
+
+            if (!sessions.length) {
+                sessionList.innerHTML = '<div class="empty">No active sessions</div>';
+                return;
+            }
+
+            sessions.forEach(s => {
+                const el = document.createElement('div');
+                el.className = 'session' + (s.current ? ' current' : '');
+
+                const info = document.createElement('div');
+                info.className = 'session-info';
+
+                const device = document.createElement('div');
+                device.className = 'session-device';
+                device.textContent = (s.browser || 'Unknown') + ' on ' + (s.device || 'Unknown');
+                if (s.current) {
+                    const badge = document.createElement('span');
+                    badge.className = 'current-badge';
+                    badge.textContent = 'This device';
+                    device.appendChild(badge);
+                }
+
+                const meta = document.createElement('div');
+                meta.className = 'session-meta';
+
+                const ip = document.createElement('span');
+                ip.textContent = s.ip || 'Unknown IP';
+
+                const loc = document.createElement('span');
+                loc.textContent = s.location || '';
+
+                const time = document.createElement('span');
+                time.textContent = s.last_active ? timeAgo(s.last_active) : '';
+
+                meta.appendChild(ip);
+                if (s.location) meta.appendChild(loc);
+                meta.appendChild(time);
+
+                info.appendChild(device);
+                info.appendChild(meta);
+                el.appendChild(info);
+
+                if (!s.current) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-revoke';
+                    btn.textContent = 'Revoke';
+                    btn.addEventListener('click', () => revokeSession(s.id, el));
+                    el.appendChild(btn);
+                }
+
+                sessionList.appendChild(el);
+            });
+
+            const otherCount = sessions.filter(s => !s.current).length;
+            revokeAllBtn.style.display = otherCount > 1 ? 'block' : 'none';
+        }
+
+        async function loadSessions() {
+            try {
+                const res = await fetch(`${API_BASE}/auth/sessions`, { credentials: 'include' });
+                const data = await res.json();
+                renderSessions(data.sessions || []);
+            } catch {
+                sessionList.innerHTML = '<div class="empty">Failed to load sessions</div>';
+            }
+        }
+
+        async function revokeSession(id, el) {
+            try {
+                const res = await fetch(`${API_BASE}/auth/sessions/revoke`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ session_id: id })
+                });
+
+                if (res.ok) {
+                    el.remove();
+                    showAlert('Session revoked.', 'success');
+                } else {
+                    const data = await res.json();
+                    showAlert(data.error || 'Failed to revoke session.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+        }
+
+        revokeAllBtn.addEventListener('click', async () => {
+            revokeAllBtn.disabled = true;
+            revokeAllBtn.textContent = 'Revoking...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/sessions/revoke-all`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (res.ok) {
+                    showAlert('All other sessions revoked.', 'success');
+                    loadSessions();
+                } else {
+                    showAlert('Failed to revoke sessions.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+
+            revokeAllBtn.disabled = false;
+            revokeAllBtn.textContent = 'Revoke All Other Sessions';
+        });
+
+        loadSessions();
+    </script>
+</body>
+</html>

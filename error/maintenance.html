@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .error-container {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .error-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 48px 32px;
+        }
+
+        .error-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .error-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .error-desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .status-bar {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+        }
+
+        .status-bar .label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+
+        .status-bar .value {
+            font-size: 0.9rem;
+            color: var(--color-warning);
+            font-weight: 600;
+        }
+
+        .btn-secondary {
+            padding: 12px 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+
+        .footer-note {
+            margin-top: 20px;
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-card">
+            <div class="error-icon">&#128736;&#65039;</div>
+            <div class="error-title">Under Maintenance</div>
+            <div class="error-desc">We're performing scheduled maintenance to improve our service. We'll be back shortly.</div>
+
+            <div class="status-bar">
+                <div class="label">Estimated return</div>
+                <div class="value" id="eta">Checking...</div>
+            </div>
+
+            <a href="javascript:location.reload()" class="btn-secondary">Refresh Page</a>
+
+            <div class="footer-note">
+                If this persists, contact support.
+            </div>
+        </div>
+    </div>
+    <script>
+        // Set your maintenance end time here (ISO string or timestamp)
+        const MAINTENANCE_END = null; // e.g. '2026-04-01T12:00:00Z'
+
+        const etaEl = document.getElementById('eta');
+
+        if (MAINTENANCE_END) {
+            const end = new Date(MAINTENANCE_END);
+            function updateEta() {
+                const now = new Date();
+                const diff = end - now;
+                if (diff <= 0) {
+                    etaEl.textContent = 'Should be back now!';
+                    etaEl.style.color = 'var(--color-success)';
+                    return;
+                }
+                const mins = Math.floor(diff / 60000);
+                const hrs = Math.floor(mins / 60);
+                if (hrs > 0) {
+                    etaEl.textContent = hrs + 'h ' + (mins % 60) + 'm remaining';
+                } else {
+                    etaEl.textContent = mins + ' minutes remaining';
+                }
+            }
+            updateEta();
+            setInterval(updateEta, 30000);
+        } else {
+            etaEl.textContent = 'Soon';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Two-Factor Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 420px; padding: 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 32px;
+        }
+
+        .header { text-align: center; margin-bottom: 24px; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; }
+        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; line-height: 1.5; }
+
+        /* Steps */
+        .steps { display: flex; justify-content: center; gap: 8px; margin-bottom: 28px; }
+        .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+        .step-dot.active { background: var(--accent); }
+        .step-dot.done { background: var(--color-success); }
+
+        /* Step panels */
+        .step-panel { display: none; }
+        .step-panel.active { display: block; }
+
+        /* QR */
+        .qr-container { text-align: center; margin: 20px 0; }
+        .qr-container img { border-radius: 8px; background: #fff; padding: 8px; max-width: 200px; }
+
+        .manual-key {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+
+        .manual-key strong {
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Backup codes */
+        .backup-codes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .backup-code {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            letter-spacing: 0.1em;
+        }
+
+        .backup-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            color: var(--color-warning);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        /* Forms */
+        .form { display: flex; flex-direction: column; gap: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: var(--accent); }
+
+        .totp-input {
+            text-align: center;
+            font-size: 1.4rem !important;
+            letter-spacing: 0.4em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+        .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); }
+
+        .back-link { text-align: center; margin-top: 16px; }
+        .back-link a { color: var(--text-muted); font-size: 0.8rem; text-decoration: none; }
+        .back-link a:hover { color: var(--text-secondary); }
+
+        /* Disable section (when 2FA already on) */
+        .disable-section {
+            display: none;
+            text-align: center;
+        }
+
+        .disable-section.show { display: block; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .status-badge.enabled { background: rgba(34, 197, 94, 0.1); color: var(--color-success); border: 1px solid rgba(34, 197, 94, 0.3); }
+        .status-badge.disabled { background: var(--badge-bg); color: var(--text-dim); border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Two-Factor Authentication</h1>
+                <p id="headerDesc">Add an extra layer of security to your account</p>
+            </div>
+
+            <div class="alert" id="alert"></div>
+
+            <!-- Status: already enabled -->
+            <div class="disable-section" id="disableSection">
+                <div class="status-badge enabled">2FA Enabled</div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+                    Two-factor authentication is currently active on your account.
+                </p>
+                <button class="btn-secondary" id="disableBtn" style="width: 100%; color: var(--color-error); border-color: rgba(239, 68, 68, 0.3);">
+                    Disable 2FA
+                </button>
+            </div>
+
+            <!-- Setup flow -->
+            <div id="setupFlow">
+                <div class="steps">
+                    <div class="step-dot active" data-step="0"></div>
+                    <div class="step-dot" data-step="1"></div>
+                    <div class="step-dot" data-step="2"></div>
+                </div>
+
+                <!-- Step 1: Scan QR -->
+                <div class="step-panel active" id="step0">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; margin-bottom: 16px;">
+                        Scan this QR code with your authenticator app
+                    </p>
+                    <div class="qr-container" id="qrContainer">
+                        <div style="color: var(--text-dim); font-size: 0.85rem;">Loading...</div>
+                    </div>
+                    <div class="manual-key">
+                        <strong>Manual entry key</strong>
+                        <span id="manualKey">Loading...</span>
+                    </div>
+                    <button class="btn-primary" style="width: 100%;" id="nextToVerify">Next: Verify Code</button>
+                </div>
+
+                <!-- Step 2: Verify code -->
+                <div class="step-panel" id="step1">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; text-align: center; margin-bottom: 16px;">
+                        Enter the 6-digit code from your authenticator app
+                    </p>
+                    <form class="form" id="verifyForm">
+                        <div class="form-group">
+                            <input type="text" id="verifyCode" required autocomplete="one-time-code"
+                                   placeholder="000000" maxlength="6" pattern="[0-9]{6}"
+                                   inputmode="numeric" class="totp-input">
+                        </div>
+                        <button type="submit" class="btn-primary" id="verifyBtn">Verify & Enable</button>
+                    </form>
+                </div>
+
+                <!-- Step 3: Backup codes -->
+                <div class="step-panel" id="step2">
+                    <div class="backup-warning">
+                        Save these backup codes in a safe place. Each code can only be used once. You won't be able to see them again.
+                    </div>
+                    <div class="backup-codes" id="backupCodes"></div>
+                    <button class="btn-secondary" id="copyCodesBtn" style="width: 100%; margin-bottom: 10px;">Copy Codes</button>
+                    <button class="btn-primary" id="doneBtn" style="width: 100%;">Done</button>
+                </div>
+            </div>
+
+            <div class="back-link"><a href="/dashboard">Back to Dashboard</a></div>
+        </div>
+    </div>
+    <script>
+        /**
+         * 2FA SETUP PAGE
+         *
+         * Server endpoints:
+         * - GET  /api/auth/2fa/status    → { enabled: bool }
+         * - POST /api/auth/2fa/setup     → { qr_url, manual_key, pending_secret }
+         * - POST /api/auth/2fa/confirm   → { pendingSecret, code } → { backup_codes: [] }
+         * - POST /api/auth/2fa/disable   → { password, code }
+         */
+
+        const API_BASE = '/api';
+        const REDIRECT = '/dashboard';
+
+        let pendingSecret = null;
+        let currentStep = 0;
+
+        const alertEl = document.getElementById('alert');
+        const setupFlow = document.getElementById('setupFlow');
+        const disableSection = document.getElementById('disableSection');
+
+        function showAlert(msg, type) {
+            alertEl.textContent = msg;
+            alertEl.className = 'alert show ' + type;
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.step-panel').forEach((el, i) => {
+                el.classList.toggle('active', i === step);
+            });
+            document.querySelectorAll('.step-dot').forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i === step) el.classList.add('active');
+                if (i < step) el.classList.add('done');
+            });
+        }
+
+        // Check current status
+        async function checkStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/auth/2fa/status`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.enabled) {
+                    setupFlow.style.display = 'none';
+                    disableSection.classList.add('show');
+                } else {
+                    startSetup();
+                }
+            } catch {
+                startSetup();
+            }
+        }
+
+        // Start setup — get QR code
+        async function startSetup() {
+            try {
+                const res = await fetch(`${API_BASE}/auth/2fa/setup`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const data = await res.json();
+                pendingSecret = data.pending_secret;
+
+                const qrContainer = document.getElementById('qrContainer');
+                qrContainer.innerHTML = '';
+                if (data.qr_url) {
+                    const img = document.createElement('img');
+                    img.src = data.qr_url;
+                    img.alt = 'QR Code';
+                    qrContainer.appendChild(img);
+                }
+
+                document.getElementById('manualKey').textContent = data.manual_key || '';
+            } catch {
+                showAlert('Failed to start 2FA setup.', 'error');
+            }
+        }
+
+        // Step navigation
+        document.getElementById('nextToVerify').addEventListener('click', () => goToStep(1));
+
+        // Verify code
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const code = document.getElementById('verifyCode').value.trim();
+            const btn = document.getElementById('verifyBtn');
+
+            if (!/^\d{6}$/.test(code)) {
+                showAlert('Enter a valid 6-digit code.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/2fa/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ pendingSecret, code })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Show backup codes
+                    const codesEl = document.getElementById('backupCodes');
+                    codesEl.innerHTML = '';
+                    (data.backup_codes || []).forEach(code => {
+                        const el = document.createElement('div');
+                        el.className = 'backup-code';
+                        el.textContent = code;
+                        codesEl.appendChild(el);
+                    });
+                    goToStep(2);
+                } else {
+                    showAlert(data.error || 'Invalid code. Try again.', 'error');
+                    document.getElementById('verifyCode').value = '';
+                    document.getElementById('verifyCode').focus();
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Verify & Enable';
+        });
+
+        // Copy codes
+        document.getElementById('copyCodesBtn').addEventListener('click', () => {
+            const codes = Array.from(document.querySelectorAll('.backup-code')).map(el => el.textContent).join('\n');
+            navigator.clipboard.writeText(codes).then(() => {
+                document.getElementById('copyCodesBtn').textContent = 'Copied!';
+                setTimeout(() => {
+                    document.getElementById('copyCodesBtn').textContent = 'Copy Codes';
+                }, 2000);
+            });
+        });
+
+        // Done
+        document.getElementById('doneBtn').addEventListener('click', () => {
+            window.location.href = REDIRECT;
+        });
+
+        // Disable 2FA
+        document.getElementById('disableBtn').addEventListener('click', async () => {
+            const password = prompt('Enter your password to disable 2FA:');
+            if (!password) return;
+
+            const code = prompt('Enter your current 2FA code:');
+            if (!code) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/2fa/disable`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ password, code })
+                });
+
+                if (res.ok) {
+                    showAlert('2FA has been disabled.', 'success');
+                    disableSection.classList.remove('show');
+                    setupFlow.style.display = '';
+                    goToStep(0);
+                    startSetup();
+                } else {
+                    const data = await res.json();
+                    showAlert(data.error || 'Failed to disable 2FA.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+        });
+
+        checkStatus();
+    </script>
+</body>
+</html>

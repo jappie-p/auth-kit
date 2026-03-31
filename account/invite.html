@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invite Team</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 560px; padding: 20px; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 16px 0; }
+            .card { padding: 24px 18px; }
+        }
+
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; }
+        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+        .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); }
+
+        .section-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        /* Invite form */
+        .invite-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 28px;
+            flex-wrap: wrap;
+        }
+
+        .invite-form input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .invite-form input:focus { outline: none; border-color: var(--accent); }
+
+        .invite-form select {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .invite-form select:focus { outline: none; border-color: var(--accent); }
+
+        .btn-send {
+            padding: 10px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-send:hover { opacity: 0.9; }
+        .btn-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        @media (max-width: 480px) {
+            .invite-form { flex-direction: column; }
+            .invite-form select { width: 100%; }
+        }
+
+        /* Lists */
+        .list-section { margin-bottom: 24px; }
+        .list-section:last-child { margin-bottom: 0; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid var(--border);
+            margin: 24px 0;
+        }
+
+        .member-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .member-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-text);
+            flex-shrink: 0;
+        }
+
+        .member-info { flex: 1; min-width: 0; }
+
+        .member-name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-email {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .member-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .role-badge {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--badge-bg);
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .role-badge.admin { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+        .role-badge.member { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+        .role-badge.viewer { background: rgba(163, 163, 163, 0.15); color: var(--text-muted); }
+
+        .btn-action {
+            padding: 5px 10px;
+            background: transparent;
+            color: var(--color-error);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-action:hover { background: rgba(239, 68, 68, 0.1); border-color: var(--color-error); }
+
+        .pending-date {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 420px) {
+            .member-item { flex-wrap: wrap; }
+            .member-meta { width: 100%; justify-content: flex-end; margin-top: 4px; }
+        }
+
+        .back-link { text-align: center; margin-top: 16px; }
+        .back-link a { color: var(--text-muted); font-size: 0.8rem; text-decoration: none; }
+        .back-link a:hover { color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>Team</h1>
+                <p>Invite members and manage your team</p>
+            </div>
+
+            <div class="alert" id="alert"></div>
+
+            <!-- Invite form -->
+            <div class="section-label">Invite by email</div>
+            <form class="invite-form" id="inviteForm">
+                <input type="email" id="inviteEmail" placeholder="colleague@example.com" required>
+                <select id="inviteRole">
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                    <option value="viewer">Viewer</option>
+                </select>
+                <button type="submit" class="btn-send" id="sendBtn">Send Invite</button>
+            </form>
+
+            <hr class="divider">
+
+            <!-- Pending invites -->
+            <div class="list-section">
+                <div class="section-label">Pending Invites</div>
+                <div class="member-list" id="pendingList">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <!-- Team members -->
+            <div class="list-section">
+                <div class="section-label">Team Members</div>
+                <div class="member-list" id="memberList">
+                    <div class="loading">Loading...</div>
+                </div>
+            </div>
+
+            <div class="back-link"><a href="/dashboard">Back to Dashboard</a></div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = '/api';
+        const alertEl = document.getElementById('alert');
+
+        function showAlert(msg, type) {
+            alertEl.textContent = msg;
+            alertEl.className = 'alert show ' + type;
+            setTimeout(() => { alertEl.className = 'alert'; }, 5000);
+        }
+
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        }
+
+        function roleClass(role) {
+            if (role === 'admin') return 'admin';
+            if (role === 'viewer') return 'viewer';
+            return 'member';
+        }
+
+        function renderPending(pending) {
+            const list = document.getElementById('pendingList');
+            list.innerHTML = '';
+
+            if (!pending.length) {
+                list.innerHTML = '<div class="empty">No pending invites</div>';
+                return;
+            }
+
+            pending.forEach(inv => {
+                const el = document.createElement('div');
+                el.className = 'member-item';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'member-avatar';
+                avatar.textContent = (inv.email || '?')[0].toUpperCase();
+
+                const info = document.createElement('div');
+                info.className = 'member-info';
+
+                const email = document.createElement('div');
+                email.className = 'member-name';
+                email.textContent = inv.email;
+
+                const date = document.createElement('div');
+                date.className = 'member-email';
+                date.textContent = 'Sent ' + (inv.sent_at ? formatDate(inv.sent_at) : '');
+
+                info.appendChild(email);
+                info.appendChild(date);
+
+                const meta = document.createElement('div');
+                meta.className = 'member-meta';
+
+                const badge = document.createElement('span');
+                badge.className = 'role-badge ' + roleClass(inv.role);
+                badge.textContent = inv.role || 'member';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn-action';
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.addEventListener('click', () => cancelInvite(inv.id || inv.email, el));
+
+                meta.appendChild(badge);
+                meta.appendChild(cancelBtn);
+
+                el.appendChild(avatar);
+                el.appendChild(info);
+                el.appendChild(meta);
+                list.appendChild(el);
+            });
+        }
+
+        function renderMembers(members) {
+            const list = document.getElementById('memberList');
+            list.innerHTML = '';
+
+            if (!members.length) {
+                list.innerHTML = '<div class="empty">No team members</div>';
+                return;
+            }
+
+            members.forEach(m => {
+                const el = document.createElement('div');
+                el.className = 'member-item';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'member-avatar';
+                avatar.textContent = (m.name || m.email || '?')[0].toUpperCase();
+
+                const info = document.createElement('div');
+                info.className = 'member-info';
+
+                const name = document.createElement('div');
+                name.className = 'member-name';
+                name.textContent = m.name || m.email;
+
+                const email = document.createElement('div');
+                email.className = 'member-email';
+                email.textContent = m.email;
+
+                info.appendChild(name);
+                info.appendChild(email);
+
+                const meta = document.createElement('div');
+                meta.className = 'member-meta';
+
+                const badge = document.createElement('span');
+                badge.className = 'role-badge ' + roleClass(m.role);
+                badge.textContent = m.role || 'member';
+
+                meta.appendChild(badge);
+
+                if (!m.is_owner) {
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn-action';
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.addEventListener('click', () => removeMember(m.id || m.email, el));
+                    meta.appendChild(removeBtn);
+                }
+
+                el.appendChild(avatar);
+                el.appendChild(info);
+                el.appendChild(meta);
+                list.appendChild(el);
+            });
+        }
+
+        async function loadTeam() {
+            try {
+                const res = await fetch(`${API_BASE}/team/members`, { credentials: 'include' });
+                const data = await res.json();
+                renderMembers(data.members || []);
+                renderPending(data.pending || []);
+            } catch {
+                document.getElementById('memberList').innerHTML = '<div class="empty">Failed to load team</div>';
+                document.getElementById('pendingList').innerHTML = '<div class="empty">Failed to load invites</div>';
+            }
+        }
+
+        document.getElementById('inviteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('sendBtn');
+            const emailInput = document.getElementById('inviteEmail');
+            const roleSelect = document.getElementById('inviteRole');
+
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch(`${API_BASE}/team/invite`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        email: emailInput.value.trim(),
+                        role: roleSelect.value
+                    })
+                });
+
+                if (res.ok) {
+                    showAlert('Invite sent.', 'success');
+                    emailInput.value = '';
+                    loadTeam();
+                } else {
+                    const data = await res.json();
+                    showAlert(data.error || 'Failed to send invite.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Send Invite';
+        });
+
+        async function cancelInvite(id, el) {
+            try {
+                const res = await fetch(`${API_BASE}/team/invite/cancel`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id })
+                });
+
+                if (res.ok) {
+                    el.remove();
+                    showAlert('Invite cancelled.', 'success');
+                } else {
+                    showAlert('Failed to cancel invite.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+        }
+
+        async function removeMember(id, el) {
+            const confirmed = confirm('Remove this team member?');
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/team/members/remove`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ id })
+                });
+
+                if (res.ok) {
+                    el.remove();
+                    showAlert('Member removed.', 'success');
+                } else {
+                    showAlert('Failed to remove member.', 'error');
+                }
+            } catch {
+                showAlert('Connection error.', 'error');
+            }
+        }
+
+        loadTeam();
+    </script>
+</body>
+</html>

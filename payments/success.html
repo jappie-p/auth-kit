@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 440px; padding: 20px; text-align: center; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 48px 32px;
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(34, 197, 94, 0.1);
+            border: 2px solid var(--color-success);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+
+        .desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .receipt-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            padding: 4px 0;
+        }
+
+        .receipt-row .label { color: var(--text-muted); }
+        .receipt-row .value { color: var(--text-primary); font-weight: 500; }
+
+        .receipt-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .receipt-note {
+            margin-top: 16px;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="success-icon">&#10003;</div>
+            <h1>Payment Successful</h1>
+            <div class="desc">Your payment has been processed. A confirmation email has been sent to your inbox.</div>
+
+            <div class="receipt-box">
+                <div class="receipt-row">
+                    <span class="label">Plan</span>
+                    <span class="value" id="receiptPlan">Pro Plan</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Amount</span>
+                    <span class="value" id="receiptAmount">--</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Payment method</span>
+                    <span class="value" id="receiptMethod">--</span>
+                </div>
+                <div class="receipt-divider"></div>
+                <div class="receipt-row">
+                    <span class="label">Transaction ID</span>
+                    <span class="value" id="receiptId">--</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="label">Date</span>
+                    <span class="value" id="receiptDate">--</span>
+                </div>
+            </div>
+
+            <a href="/dashboard" class="btn-primary">Go to Dashboard</a>
+
+            <div class="receipt-note">
+                Need help? Contact support with your transaction ID.
+            </div>
+        </div>
+    </div>
+    <script>
+        /**
+         * PAYMENT SUCCESS PAGE
+         *
+         * Option A: Read payment info from URL params (?payment_id=xxx)
+         *   Then call GET /api/payments/:id to fetch receipt details
+         *
+         * Option B: Backend pre-renders the details before serving this page
+         *
+         * Server endpoint:
+         * - GET /api/payments/:id → { plan, amount, currency, method, transaction_id, date }
+         */
+
+        const API_BASE = '/api';
+
+        const params = new URLSearchParams(window.location.search);
+        const paymentId = params.get('payment_id') || params.get('id');
+
+        document.getElementById('receiptDate').textContent = new Date().toLocaleDateString();
+
+        if (paymentId) {
+            fetch(`${API_BASE}/payments/${encodeURIComponent(paymentId)}`, { credentials: 'include' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.plan) document.getElementById('receiptPlan').textContent = data.plan;
+                    if (data.amount) document.getElementById('receiptAmount').textContent = data.currency === 'EUR'
+                        ? '\u20AC' + data.amount : '$' + data.amount;
+                    if (data.method) document.getElementById('receiptMethod').textContent = data.method;
+                    if (data.transaction_id) document.getElementById('receiptId').textContent = data.transaction_id;
+                    if (data.date) document.getElementById('receiptDate').textContent = new Date(data.date).toLocaleDateString();
+                })
+                .catch(() => {});
+        }
+    </script>
+</body>
+</html>

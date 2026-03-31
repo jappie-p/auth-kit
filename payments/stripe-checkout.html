@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout — Stripe</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .checkout-container { width: 100%; max-width: 440px; padding: 20px; }
+
+        .checkout-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .checkout-header { margin-bottom: 24px; }
+        .checkout-header h1 { font-size: 1.25rem; font-weight: 600; }
+        .checkout-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+
+        /* Order summary */
+        .order-summary {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            padding: 6px 0;
+        }
+
+        .order-item .name { color: var(--text-primary); }
+        .order-item .price { color: var(--text-secondary); font-weight: 500; }
+
+        .order-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding-top: 4px;
+        }
+
+        .order-total .price { color: var(--accent); }
+
+        /* Payment form */
+        .payment-form { display: flex; flex-direction: column; gap: 16px; }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: var(--accent); }
+        .form-group input::placeholder { color: var(--text-dim); }
+
+        /* Stripe Elements placeholder */
+        .stripe-element {
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-height: 44px;
+            transition: border-color 0.2s;
+        }
+
+        .stripe-element.focused { border-color: var(--accent); }
+        .stripe-element.error { border-color: var(--color-error); }
+
+        .card-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .card-errors {
+            font-size: 0.8rem;
+            color: var(--color-error);
+            min-height: 18px;
+        }
+
+        /* Payment methods tabs */
+        .payment-methods {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .payment-method:hover { border-color: var(--border-hover); }
+        .payment-method.active { border-color: var(--accent); color: var(--accent); background: rgba(59, 130, 246, 0.05); }
+
+        .payment-method .method-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+
+        /* Pay button */
+        .pay-btn {
+            padding: 14px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .pay-btn:hover { opacity: 0.9; }
+        .pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .pay-btn .lock-icon { font-size: 0.85rem; }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+        .alert.success { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--color-success); color: var(--color-success); }
+
+        .secure-note {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.7rem;
+            color: var(--text-faint);
+        }
+
+        /* Coupon */
+        .coupon-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .coupon-row input { flex: 1; }
+
+        .coupon-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .coupon-btn:hover { border-color: var(--border-hover); }
+
+        .coupon-applied {
+            font-size: 0.8rem;
+            color: var(--color-success);
+            display: none;
+        }
+
+        .coupon-applied.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <div class="checkout-card">
+            <div class="checkout-header">
+                <h1>Checkout</h1>
+                <p>Complete your purchase</p>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary" id="orderSummary">
+                <div class="order-item">
+                    <span class="name" id="itemName">Pro Plan (Monthly)</span>
+                    <span class="price" id="itemPrice">$9.99</span>
+                </div>
+                <div class="order-item" id="discountRow" style="display: none;">
+                    <span class="name" style="color: var(--color-success);">Discount</span>
+                    <span class="price" style="color: var(--color-success);" id="discountAmount">-$0.00</span>
+                </div>
+                <div class="order-divider"></div>
+                <div class="order-total">
+                    <span>Total</span>
+                    <span class="price" id="totalPrice">$9.99</span>
+                </div>
+            </div>
+
+            <!-- Coupon -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <div class="coupon-row">
+                    <input type="text" id="couponInput" placeholder="Coupon code" maxlength="30">
+                    <button class="coupon-btn" id="couponBtn">Apply</button>
+                </div>
+                <div class="coupon-applied" id="couponApplied">Coupon applied!</div>
+            </div>
+
+            <!-- Payment Method Tabs -->
+            <div class="payment-methods">
+                <button class="payment-method active" data-method="card">
+                    <span class="method-icon">&#128179;</span>
+                    Card
+                </button>
+                <button class="payment-method" data-method="ideal">
+                    <span class="method-icon">&#127974;</span>
+                    iDEAL
+                </button>
+                <button class="payment-method" data-method="bancontact">
+                    <span class="method-icon">&#127462;&#127466;</span>
+                    Bancontact
+                </button>
+            </div>
+
+            <form class="payment-form" id="paymentForm">
+                <div class="alert" id="payAlert"></div>
+
+                <!-- Card form (Stripe Elements mount here) -->
+                <div id="cardFields">
+                    <div class="form-group">
+                        <label for="cardName">Name on card</label>
+                        <input type="text" id="cardName" placeholder="John Doe" required maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Card number</label>
+                        <div class="stripe-element" id="cardNumber"></div>
+                    </div>
+
+                    <div class="card-row">
+                        <div class="form-group">
+                            <label>Expiry</label>
+                            <div class="stripe-element" id="cardExpiry"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>CVC</label>
+                            <div class="stripe-element" id="cardCvc"></div>
+                        </div>
+                    </div>
+
+                    <div class="card-errors" id="cardErrors"></div>
+                </div>
+
+                <!-- iDEAL bank select (hidden by default) -->
+                <div id="idealFields" style="display: none;">
+                    <div class="form-group">
+                        <label>Select your bank</label>
+                        <div class="stripe-element" id="idealBank"></div>
+                    </div>
+                </div>
+
+                <!-- Bancontact (just needs name) -->
+                <div id="bancontactFields" style="display: none;">
+                    <div class="form-group">
+                        <label for="bcName">Account holder name</label>
+                        <input type="text" id="bcName" placeholder="Your full name" maxlength="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email (for receipt)</label>
+                    <input type="email" id="email" placeholder="you@example.com" required maxlength="100">
+                </div>
+
+                <button type="submit" class="pay-btn" id="payBtn">
+                    <span class="lock-icon">&#128274;</span>
+                    <span id="payBtnText">Pay $9.99</span>
+                </button>
+            </form>
+
+            <div class="secure-note">
+                Payments are securely processed by Stripe. We never see your card details.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * STRIPE CHECKOUT TEMPLATE
+         *
+         * Frontend flow:
+         * 1. User fills in payment form
+         * 2. Frontend calls YOUR backend to create a PaymentIntent
+         * 3. Backend calls Stripe API with secret key → returns { clientSecret }
+         * 4. Frontend uses clientSecret with Stripe.js to confirm payment
+         * 5. Stripe handles 3D Secure / SCA automatically
+         * 6. Frontend redirects on success
+         *
+         * YOUR backend endpoints (no API keys in frontend):
+         * - POST /api/payments/create-intent → { client_secret, amount, currency }
+         *   Body: { plan_id, coupon_code? }
+         * - POST /api/payments/apply-coupon → { valid, discount_amount, new_total }
+         *   Body: { coupon_code, plan_id }
+         *
+         * Stripe.js setup:
+         * 1. Add <script src="https://js.stripe.com/v3/"><​/script> before this script
+         * 2. Set STRIPE_PUBLIC_KEY to your publishable key (pk_live_... or pk_test_...)
+         *    This is the ONLY key that goes in the frontend — it's safe to expose
+         *
+         * Payment methods supported:
+         * - Card (with 3D Secure / SCA)
+         * - iDEAL (Netherlands)
+         * - Bancontact (Belgium)
+         *   Add more by extending the payment-methods tabs
+         */
+
+        const API_BASE = '/api';
+        const SUCCESS_URL = '/payment/success';
+        const STRIPE_PUBLIC_KEY = 'pk_test_YOUR_KEY_HERE'; // publishable key only!
+
+        let stripe, elements, cardNumber, cardExpiry, cardCvc, idealBank;
+        let activeMethod = 'card';
+        let currentPlanId = 'pro_monthly'; // Set from your pricing page
+        let currentTotal = 999; // cents
+
+        const payForm = document.getElementById('paymentForm');
+        const payAlert = document.getElementById('payAlert');
+        const payBtn = document.getElementById('payBtn');
+        const payBtnText = document.getElementById('payBtnText');
+
+        function showAlert(msg, type) {
+            payAlert.textContent = msg;
+            payAlert.className = 'alert show ' + type;
+        }
+
+        function hideAlert() { payAlert.className = 'alert'; }
+
+        function formatPrice(cents) {
+            return '$' + (cents / 100).toFixed(2);
+        }
+
+        // ─── Stripe Elements Setup ───
+        // Uncomment when you've added Stripe.js:
+
+        // stripe = Stripe(STRIPE_PUBLIC_KEY);
+        // elements = stripe.elements({
+        //     fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700' }]
+        // });
+
+        // const elementStyle = {
+        //     base: {
+        //         color: '#fafafa',
+        //         fontFamily: 'Geist, sans-serif',
+        //         fontSize: '15px',
+        //         '::placeholder': { color: '#525252' }
+        //     },
+        //     invalid: { color: '#ef4444' }
+        // };
+
+        // cardNumber = elements.create('cardNumber', { style: elementStyle });
+        // cardNumber.mount('#cardNumber');
+
+        // cardExpiry = elements.create('cardExpiry', { style: elementStyle });
+        // cardExpiry.mount('#cardExpiry');
+
+        // cardCvc = elements.create('cardCvc', { style: elementStyle });
+        // cardCvc.mount('#cardCvc');
+
+        // idealBank = elements.create('idealBank', { style: elementStyle });
+        // idealBank.mount('#idealBank');
+
+        // // Show card errors
+        // cardNumber.on('change', (e) => {
+        //     document.getElementById('cardErrors').textContent = e.error ? e.error.message : '';
+        // });
+
+        // ─── Payment method tabs ───
+
+        document.querySelectorAll('.payment-method').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeMethod = btn.dataset.method;
+
+                document.getElementById('cardFields').style.display = activeMethod === 'card' ? 'block' : 'none';
+                document.getElementById('idealFields').style.display = activeMethod === 'ideal' ? 'block' : 'none';
+                document.getElementById('bancontactFields').style.display = activeMethod === 'bancontact' ? 'block' : 'none';
+            });
+        });
+
+        // ─── Coupon ───
+
+        document.getElementById('couponBtn').addEventListener('click', async () => {
+            const code = document.getElementById('couponInput').value.trim();
+            if (!code) return;
+
+            const btn = document.getElementById('couponBtn');
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+
+            try {
+                const res = await fetch(`${API_BASE}/payments/apply-coupon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ coupon_code: code, plan_id: currentPlanId })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.valid) {
+                    currentTotal = data.new_total;
+                    document.getElementById('discountRow').style.display = 'flex';
+                    document.getElementById('discountAmount').textContent = '-' + formatPrice(data.discount_amount);
+                    document.getElementById('totalPrice').textContent = formatPrice(data.new_total);
+                    payBtnText.textContent = 'Pay ' + formatPrice(data.new_total);
+                    document.getElementById('couponApplied').classList.add('show');
+                    document.getElementById('couponInput').disabled = true;
+                    btn.textContent = 'Applied';
+                } else {
+                    showAlert(data.error || 'Invalid coupon code.', 'error');
+                    btn.textContent = 'Apply';
+                    btn.disabled = false;
+                }
+            } catch {
+                showAlert('Failed to apply coupon.', 'error');
+                btn.textContent = 'Apply';
+                btn.disabled = false;
+            }
+        });
+
+        // ─── Submit payment ───
+
+        payForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideAlert();
+
+            payBtn.disabled = true;
+            payBtnText.textContent = 'Processing...';
+
+            try {
+                // Step 1: Create PaymentIntent on YOUR backend
+                const intentRes = await fetch(`${API_BASE}/payments/create-intent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        plan_id: currentPlanId,
+                        coupon_code: document.getElementById('couponInput').value.trim() || undefined,
+                        payment_method: activeMethod
+                    })
+                });
+
+                const intentData = await intentRes.json();
+
+                if (!intentRes.ok) {
+                    showAlert(intentData.error || 'Payment failed.', 'error');
+                    payBtn.disabled = false;
+                    payBtnText.textContent = 'Pay ' + formatPrice(currentTotal);
+                    return;
+                }
+
+                const { client_secret } = intentData;
+
+                // Step 2: Confirm with Stripe.js
+                // Uncomment when Stripe.js is loaded:
+
+                // let result;
+                //
+                // if (activeMethod === 'card') {
+                //     result = await stripe.confirmCardPayment(client_secret, {
+                //         payment_method: {
+                //             card: cardNumber,
+                //             billing_details: {
+                //                 name: document.getElementById('cardName').value,
+                //                 email: document.getElementById('email').value
+                //             }
+                //         }
+                //     });
+                // } else if (activeMethod === 'ideal') {
+                //     result = await stripe.confirmIdealPayment(client_secret, {
+                //         payment_method: { ideal: idealBank },
+                //         return_url: window.location.origin + SUCCESS_URL
+                //     });
+                // } else if (activeMethod === 'bancontact') {
+                //     result = await stripe.confirmBancontactPayment(client_secret, {
+                //         payment_method: {
+                //             billing_details: { name: document.getElementById('bcName').value }
+                //         },
+                //         return_url: window.location.origin + SUCCESS_URL
+                //     });
+                // }
+                //
+                // if (result.error) {
+                //     showAlert(result.error.message, 'error');
+                // } else if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+                //     window.location.href = SUCCESS_URL;
+                // }
+
+                // Placeholder for demo:
+                showAlert('Payment would process here. Add Stripe.js to enable.', 'success');
+
+            } catch (err) {
+                showAlert('Connection error. Try again.', 'error');
+            }
+
+            payBtn.disabled = false;
+            payBtnText.textContent = 'Pay ' + formatPrice(currentTotal);
+        });
+    </script>
+</body>
+</html>

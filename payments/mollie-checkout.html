@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout — Mollie</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .checkout-container { width: 100%; max-width: 440px; padding: 20px; }
+
+        .checkout-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+
+        .checkout-header { margin-bottom: 24px; }
+        .checkout-header h1 { font-size: 1.25rem; font-weight: 600; }
+        .checkout-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+
+        /* Order summary */
+        .order-summary {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 6px 0;
+        }
+
+        .order-item .name { color: var(--text-primary); }
+        .order-item .price { color: var(--text-secondary); font-weight: 500; }
+
+        .order-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            font-weight: 600;
+            padding-top: 4px;
+        }
+
+        .order-total .price { color: var(--accent); }
+
+        /* Billing cycle */
+        .billing-toggle {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .billing-option {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: inherit;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .billing-option:hover { border-color: var(--border-hover); }
+        .billing-option.active { border-color: var(--accent); color: var(--accent); }
+
+        .billing-option .cycle { font-weight: 600; display: block; margin-bottom: 2px; }
+        .billing-option .save {
+            position: absolute;
+            top: -8px;
+            right: -4px;
+            background: var(--color-success);
+            color: #000;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* Payment methods */
+        .method-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .payment-methods {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .method-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .method-option:hover { border-color: var(--border-hover); }
+        .method-option.active { border-color: var(--accent); }
+
+        .method-radio {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.2s;
+        }
+
+        .method-option.active .method-radio {
+            border-color: var(--accent);
+        }
+
+        .method-option.active .method-radio::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .method-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+        .method-info { flex: 1; }
+        .method-name { font-size: 0.85rem; color: var(--text-primary); font-weight: 500; }
+        .method-desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 1px; }
+
+        /* iDEAL bank selector */
+        .bank-select {
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .bank-select.show { display: block; }
+
+        .bank-select select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+
+        .bank-select select:focus { outline: none; border-color: var(--accent); }
+
+        /* Form */
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+
+        .form-group input {
+            padding: 10px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus { outline: none; border-color: var(--accent); }
+        .form-group input::placeholder { color: var(--text-dim); }
+
+        /* Pay button */
+        .pay-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .pay-btn:hover { opacity: 0.9; }
+        .pay-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .alert {
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            display: none;
+            margin-bottom: 16px;
+        }
+
+        .alert.show { display: block; }
+        .alert.error { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--color-error); color: var(--color-error); }
+
+        .secure-note {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 0.7rem;
+            color: var(--text-faint);
+        }
+
+        /* Coupon */
+        .coupon-row { display: flex; gap: 8px; }
+        .coupon-row input { flex: 1; }
+
+        .coupon-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .coupon-btn:hover { border-color: var(--border-hover); }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <div class="checkout-card">
+            <div class="checkout-header">
+                <h1>Checkout</h1>
+                <p>Choose your plan and payment method</p>
+            </div>
+
+            <!-- Billing Cycle Toggle -->
+            <div class="billing-toggle">
+                <button class="billing-option active" data-cycle="monthly">
+                    <span class="cycle">Monthly</span>
+                    <span id="monthlyPrice">&#8364;9.99/mo</span>
+                </button>
+                <button class="billing-option" data-cycle="quarterly">
+                    <span class="cycle">Quarterly</span>
+                    <span id="quarterlyPrice">&#8364;24.99/3mo</span>
+                    <span class="save">-17%</span>
+                </button>
+                <button class="billing-option" data-cycle="yearly">
+                    <span class="cycle">Yearly</span>
+                    <span id="yearlyPrice">&#8364;89.99/yr</span>
+                    <span class="save">-25%</span>
+                </button>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary">
+                <div class="order-item">
+                    <span class="name" id="planName">Pro Plan — Monthly</span>
+                    <span class="price" id="planPrice">&#8364;9.99</span>
+                </div>
+                <div class="order-item" id="discountRow" style="display: none;">
+                    <span class="name" style="color: var(--color-success);">Discount</span>
+                    <span class="price" style="color: var(--color-success);" id="discountAmount"></span>
+                </div>
+                <div class="order-divider"></div>
+                <div class="order-total">
+                    <span>Total</span>
+                    <span class="price" id="totalPrice">&#8364;9.99</span>
+                </div>
+            </div>
+
+            <!-- Coupon -->
+            <div class="form-group">
+                <div class="coupon-row">
+                    <input type="text" id="couponInput" placeholder="Coupon code" maxlength="30">
+                    <button class="coupon-btn" id="couponBtn">Apply</button>
+                </div>
+            </div>
+
+            <!-- Payment Methods -->
+            <div class="method-label">Payment method</div>
+            <div class="payment-methods" id="methodList">
+                <div class="method-option active" data-method="ideal">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#127974;</span>
+                    <div class="method-info">
+                        <div class="method-name">iDEAL</div>
+                        <div class="method-desc">Pay with your Dutch bank</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="bancontact">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#127462;&#127466;</span>
+                    <div class="method-info">
+                        <div class="method-name">Bancontact</div>
+                        <div class="method-desc">Belgian bank payment</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="creditcard">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#128179;</span>
+                    <div class="method-info">
+                        <div class="method-name">Credit Card</div>
+                        <div class="method-desc">Visa, Mastercard, AMEX</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="paypal">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#128176;</span>
+                    <div class="method-info">
+                        <div class="method-name">PayPal</div>
+                        <div class="method-desc">Pay with your PayPal account</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="sofort">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#127465;&#127466;</span>
+                    <div class="method-info">
+                        <div class="method-name">SOFORT / Klarna</div>
+                        <div class="method-desc">German bank transfer</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="eps">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#127462;&#127481;</span>
+                    <div class="method-info">
+                        <div class="method-name">EPS</div>
+                        <div class="method-desc">Austrian bank transfer</div>
+                    </div>
+                </div>
+                <div class="method-option" data-method="applepay">
+                    <div class="method-radio"></div>
+                    <span class="method-icon">&#63743;</span>
+                    <div class="method-info">
+                        <div class="method-name">Apple Pay</div>
+                        <div class="method-desc">Pay with Apple Pay</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- iDEAL bank selector -->
+            <div class="bank-select show" id="bankSelect">
+                <select id="idealBank">
+                    <option value="">Select your bank...</option>
+                    <option value="abn_amro">ABN AMRO</option>
+                    <option value="asn_bank">ASN Bank</option>
+                    <option value="bunq">bunq</option>
+                    <option value="ing">ING</option>
+                    <option value="knab">Knab</option>
+                    <option value="rabobank">Rabobank</option>
+                    <option value="regiobank">RegioBank</option>
+                    <option value="revolut">Revolut</option>
+                    <option value="sns_bank">SNS Bank</option>
+                    <option value="triodos_bank">Triodos Bank</option>
+                    <option value="van_lanschot">Van Lanschot</option>
+                </select>
+            </div>
+
+            <div class="alert" id="payAlert"></div>
+
+            <div class="form-group">
+                <label for="email">Email (for receipt)</label>
+                <input type="email" id="email" placeholder="you@example.com" required maxlength="100">
+            </div>
+
+            <button class="pay-btn" id="payBtn">
+                <span>&#128274;</span>
+                <span id="payBtnText">Pay &#8364;9.99</span>
+            </button>
+
+            <div class="secure-note">
+                Payments are securely processed by Mollie. Your payment details are never stored on our servers.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * MOLLIE CHECKOUT TEMPLATE
+         *
+         * Mollie flow (redirect-based — no JS SDK needed):
+         * 1. User picks payment method + fills in email
+         * 2. Frontend POSTs to YOUR backend
+         * 3. YOUR backend calls Mollie API to create a payment
+         *    → Mollie returns a checkout URL
+         * 4. Backend returns { checkout_url } to frontend
+         * 5. Frontend redirects user to Mollie's hosted checkout
+         * 6. After payment, Mollie redirects back to your success/fail URL
+         * 7. Mollie sends a webhook to your backend to confirm
+         *
+         * YOUR backend endpoints:
+         * - POST /api/payments/create
+         *   Body: { plan_id, cycle, method, email, issuer?, coupon_code? }
+         *   Response: { checkout_url }
+         *
+         * - POST /api/payments/apply-coupon
+         *   Body: { coupon_code, plan_id, cycle }
+         *   Response: { valid, discount_amount, new_total }
+         *
+         * - POST /api/payments/webhook (called by Mollie)
+         *   Body: { id } — the Mollie payment ID
+         *   Your backend checks payment status with Mollie API
+         *
+         * Backend (Node.js example):
+         *   const mollie = require('@mollie/api-client')({ apiKey: process.env.MOLLIE_API_KEY });
+         *   const payment = await mollie.payments.create({
+         *     amount: { currency: 'EUR', value: '9.99' },
+         *     description: 'Pro Plan — Monthly',
+         *     redirectUrl: 'https://yoursite.com/payment/success',
+         *     webhookUrl: 'https://yoursite.com/api/payments/webhook',
+         *     method: 'ideal',
+         *     issuer: 'ideal_INGBNL2A' // optional: pre-select bank
+         *   });
+         *   res.json({ checkout_url: payment.getCheckoutUrl() });
+         */
+
+        const API_BASE = '/api';
+
+        let activeMethod = 'ideal';
+        let activeCycle = 'monthly';
+        let currentTotal = 999; // cents
+
+        const PRICES = {
+            monthly: { amount: 999, label: 'Monthly', desc: 'Pro Plan \u2014 Monthly' },
+            quarterly: { amount: 2499, label: 'Quarterly', desc: 'Pro Plan \u2014 Quarterly' },
+            yearly: { amount: 8999, label: 'Yearly', desc: 'Pro Plan \u2014 Yearly' }
+        };
+
+        const payAlert = document.getElementById('payAlert');
+        const payBtn = document.getElementById('payBtn');
+        const payBtnText = document.getElementById('payBtnText');
+
+        function formatEur(cents) {
+            return '\u20AC' + (cents / 100).toFixed(2);
+        }
+
+        function showAlert(msg) {
+            payAlert.textContent = msg;
+            payAlert.className = 'alert show error';
+        }
+
+        function updatePrice() {
+            const p = PRICES[activeCycle];
+            currentTotal = p.amount;
+            document.getElementById('planName').textContent = p.desc;
+            document.getElementById('planPrice').textContent = formatEur(p.amount);
+            document.getElementById('totalPrice').textContent = formatEur(p.amount);
+            payBtnText.textContent = 'Pay ' + formatEur(p.amount);
+        }
+
+        // Billing cycle
+        document.querySelectorAll('.billing-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.billing-option').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeCycle = btn.dataset.cycle;
+                updatePrice();
+            });
+        });
+
+        // Payment methods
+        document.querySelectorAll('.method-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                document.querySelectorAll('.method-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                activeMethod = opt.dataset.method;
+
+                document.getElementById('bankSelect').classList.toggle('show', activeMethod === 'ideal');
+            });
+        });
+
+        // Coupon
+        document.getElementById('couponBtn').addEventListener('click', async () => {
+            const code = document.getElementById('couponInput').value.trim();
+            if (!code) return;
+
+            const btn = document.getElementById('couponBtn');
+            btn.disabled = true;
+            btn.textContent = 'Checking...';
+
+            try {
+                const res = await fetch(`${API_BASE}/payments/apply-coupon`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ coupon_code: code, plan_id: 'pro', cycle: activeCycle })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.valid) {
+                    currentTotal = data.new_total;
+                    document.getElementById('discountRow').style.display = 'flex';
+                    document.getElementById('discountAmount').textContent = '-' + formatEur(data.discount_amount);
+                    document.getElementById('totalPrice').textContent = formatEur(data.new_total);
+                    payBtnText.textContent = 'Pay ' + formatEur(data.new_total);
+                    document.getElementById('couponInput').disabled = true;
+                    btn.textContent = 'Applied';
+                } else {
+                    showAlert(data.error || 'Invalid coupon code.');
+                    btn.textContent = 'Apply';
+                    btn.disabled = false;
+                }
+            } catch {
+                showAlert('Failed to check coupon.');
+                btn.textContent = 'Apply';
+                btn.disabled = false;
+            }
+        });
+
+        // Pay
+        payBtn.addEventListener('click', async () => {
+            const email = document.getElementById('email').value.trim();
+            if (!email) { showAlert('Please enter your email.'); return; }
+
+            if (activeMethod === 'ideal' && !document.getElementById('idealBank').value) {
+                showAlert('Please select your bank.');
+                return;
+            }
+
+            payBtn.disabled = true;
+            payBtnText.textContent = 'Redirecting...';
+            payAlert.className = 'alert';
+
+            try {
+                const body = {
+                    plan_id: 'pro',
+                    cycle: activeCycle,
+                    method: activeMethod,
+                    email
+                };
+
+                if (activeMethod === 'ideal') body.issuer = document.getElementById('idealBank').value;
+
+                const coupon = document.getElementById('couponInput').value.trim();
+                if (coupon) body.coupon_code = coupon;
+
+                const res = await fetch(`${API_BASE}/payments/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.checkout_url) {
+                    window.location.href = data.checkout_url;
+                } else {
+                    showAlert(data.error || 'Payment failed. Try again.');
+                }
+            } catch {
+                showAlert('Connection error. Try again.');
+            }
+
+            payBtn.disabled = false;
+            payBtnText.textContent = 'Pay ' + formatEur(currentTotal);
+        });
+    </script>
+</body>
+</html>

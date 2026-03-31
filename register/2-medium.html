@@ -7,12 +7,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
     <style>
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #0a0a0a;
+            background: var(--bg-page);
             color: #e5e5e5;
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh;
@@ -22,8 +24,8 @@
         .container { width: 100%; max-width: 400px; padding: 20px; }
 
         .card {
-            background: #141414;
-            border: 1px solid #262626;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             border-radius: 12px;
             padding: 40px 32px;
         }
@@ -32,38 +34,38 @@
 
         .header .logo {
             width: 48px; height: 48px;
-            background: #3b82f6;
+            background: var(--accent);
             border-radius: 12px;
             margin: 0 auto 16px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem; font-weight: 700; color: #fff;
+            font-size: 1.2rem; font-weight: 700; color: var(--accent-text);
         }
 
-        .header h1 { font-size: 1.25rem; font-weight: 600; color: #fafafa; }
-        .header p { color: #737373; font-size: 0.85rem; margin-top: 6px; }
+        .header h1 { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
+        .header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
 
         .form { display: flex; flex-direction: column; gap: 18px; }
         .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 0.8rem; color: #a3a3a3; font-weight: 500; }
+        .form-group label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
 
         .form-group input {
             padding: 10px 14px;
-            background: #0a0a0a;
-            border: 1px solid #262626;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            color: #fafafa;
+            color: var(--text-primary);
             font-size: 0.95rem;
             font-family: inherit;
             transition: border-color 0.2s;
         }
 
-        .form-group input:focus { outline: none; border-color: #3b82f6; }
-        .form-group input::placeholder { color: #525252; }
+        .form-group input:focus { outline: none; border-color: var(--accent); }
+        .form-group input::placeholder { color: var(--text-dim); }
 
         .btn {
             padding: 12px 20px;
-            background: #3b82f6;
-            color: #fff;
+            background: var(--accent);
+            color: var(--accent-text);
             border: none;
             border-radius: 8px;
             font-size: 0.95rem;
@@ -77,11 +79,11 @@
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .error {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid #ef4444;
+            background: rgba(239, 68, 68, 0.1); /* derived from --color-error */
+            border: 1px solid var(--color-error);
             border-radius: 8px;
             padding: 10px 14px;
-            color: #ef4444;
+            color: var(--color-error);
             font-size: 0.85rem;
             display: none;
         }
@@ -89,11 +91,11 @@
         .error.show { display: block; }
 
         .success {
-            background: rgba(34, 197, 94, 0.1);
-            border: 1px solid #22c55e;
+            background: rgba(34, 197, 94, 0.1); /* derived from --color-success */
+            border: 1px solid var(--color-success);
             border-radius: 8px;
             padding: 10px 14px;
-            color: #22c55e;
+            color: var(--color-success);
             font-size: 0.85rem;
             display: none;
             text-align: center;
@@ -105,7 +107,7 @@
         .strength-bar {
             height: 3px;
             border-radius: 2px;
-            background: #262626;
+            background: var(--border);
             margin-top: 4px;
             overflow: hidden;
         }
@@ -126,11 +128,11 @@
 
         .password-reqs .req {
             font-size: 0.7rem;
-            color: #525252;
+            color: var(--text-dim);
             transition: color 0.2s;
         }
 
-        .password-reqs .req.met { color: #22c55e; }
+        .password-reqs .req.met { color: var(--color-success); }
 
         /* Match indicator */
         .match-indicator {
@@ -140,26 +142,26 @@
         }
 
         .match-indicator.show { display: block; }
-        .match-indicator.match { color: #22c55e; }
-        .match-indicator.no-match { color: #ef4444; }
+        .match-indicator.match { color: var(--color-success); }
+        .match-indicator.no-match { color: var(--color-error); }
 
         .login-link {
             text-align: center;
             margin-top: 20px;
             font-size: 0.85rem;
-            color: #737373;
+            color: var(--text-muted);
         }
 
-        .login-link a { color: #3b82f6; text-decoration: none; }
+        .login-link a { color: var(--accent); text-decoration: none; }
         .login-link a:hover { text-decoration: underline; }
 
         .tier-badge {
             text-align: center; margin-top: 24px;
-            font-size: 0.75rem; color: #525252;
+            font-size: 0.75rem; color: var(--text-dim);
         }
 
         .tier-badge span {
-            background: #1a1a1a; border: 1px solid #262626;
+            background: var(--badge-bg); border: 1px solid var(--border);
             border-radius: 100px; padding: 4px 12px;
         }
     </style>
@@ -211,7 +213,7 @@
             </form>
 
             <div class="login-link">
-                Already have an account? <a href="login.html">Sign in</a>
+                Already have an account? <a href="../2-medium.html">Sign in</a>
             </div>
 
             <div class="tier-badge"><span>Tier 2 — Medium</span></div>
@@ -237,7 +239,7 @@
          */
 
         const API_BASE = '/api';
-        const LOGIN_URL = 'login.html';
+        const LOGIN_URL = '../2-medium.html';
 
         const form = document.getElementById('registerForm');
         const errorEl = document.getElementById('error');

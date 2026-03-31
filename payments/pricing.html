@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            padding: 60px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .pricing-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .pricing-header h1 { font-size: 2rem; font-weight: 700; }
+        .pricing-header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 8px; }
+
+        /* Cycle toggle */
+        .cycle-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px;
+            display: inline-flex;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .pricing-header .cycle-wrap { text-align: center; margin-bottom: 40px; }
+
+        .cycle-btn {
+            padding: 8px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-family: inherit;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .cycle-btn.active { background: var(--accent); color: var(--accent-text); }
+        .cycle-btn .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--color-success);
+            color: #000;
+            font-size: 0.55rem;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        /* Cards */
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+
+        .pricing-card:hover { border-color: var(--border-hover); }
+        .pricing-card.featured { border-color: var(--accent); position: relative; }
+
+        .pricing-card.featured::before {
+            content: 'Popular';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--accent-text);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 12px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .plan-name {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .plan-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .plan-price .currency { font-size: 1.2rem; vertical-align: top; }
+        .plan-price .period { font-size: 0.85rem; color: var(--text-muted); font-weight: 400; }
+
+        .plan-billed {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+        }
+
+        .plan-features {
+            list-style: none;
+            flex: 1;
+            margin-bottom: 24px;
+        }
+
+        .plan-features li {
+            padding: 6px 0;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plan-features li .check { color: var(--color-success); font-size: 0.9rem; }
+        .plan-features li .cross { color: var(--text-faint); font-size: 0.9rem; }
+
+        .plan-btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            transition: opacity 0.2s;
+        }
+
+        .plan-btn:hover { opacity: 0.9; }
+
+        .plan-btn.primary { background: var(--accent); color: var(--accent-text); border: none; }
+        .plan-btn.secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+    <div class="pricing-container">
+        <div class="pricing-header">
+            <h1>Pricing</h1>
+            <p>Choose the plan that works for you</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div class="cycle-toggle">
+                <button class="cycle-btn active" data-cycle="monthly">Monthly</button>
+                <button class="cycle-btn" data-cycle="quarterly">
+                    Quarterly
+                    <span class="badge">-17%</span>
+                </button>
+                <button class="cycle-btn" data-cycle="yearly">
+                    Yearly
+                    <span class="badge">-25%</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="pricing-cards" id="pricingCards">
+            <!-- Generated by JS -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * PRICING PAGE TEMPLATE
+         *
+         * Edit the PLANS array below with your plans.
+         * Set CHECKOUT_URL to your checkout page.
+         * Prices update when the billing cycle changes.
+         *
+         * Optional: Load plans from API
+         * - GET /api/plans → [{ id, name, description, features, prices: { monthly, quarterly, yearly }, featured }]
+         */
+
+        const CHECKOUT_URL = '/checkout';
+        const CURRENCY = '\u20AC';
+
+        const PLANS = [
+            {
+                id: 'free',
+                name: 'Free',
+                description: 'For personal projects',
+                featured: false,
+                btnStyle: 'secondary',
+                btnText: 'Get Started',
+                prices: { monthly: 0, quarterly: 0, yearly: 0 },
+                features: [
+                    { text: '1 project', included: true },
+                    { text: '500 MB storage', included: true },
+                    { text: 'Community support', included: true },
+                    { text: 'Custom domain', included: false },
+                    { text: 'Priority support', included: false },
+                ]
+            },
+            {
+                id: 'pro',
+                name: 'Pro',
+                description: 'For professionals and small teams',
+                featured: true,
+                btnStyle: 'primary',
+                btnText: 'Get Pro',
+                prices: { monthly: 999, quarterly: 2499, yearly: 8999 },
+                features: [
+                    { text: '10 projects', included: true },
+                    { text: '10 GB storage', included: true },
+                    { text: 'Priority support', included: true },
+                    { text: 'Custom domain', included: true },
+                    { text: 'Analytics', included: true },
+                ]
+            },
+            {
+                id: 'business',
+                name: 'Business',
+                description: 'For growing companies',
+                featured: false,
+                btnStyle: 'secondary',
+                btnText: 'Get Business',
+                prices: { monthly: 2999, quarterly: 7499, yearly: 26999 },
+                features: [
+                    { text: 'Unlimited projects', included: true },
+                    { text: '100 GB storage', included: true },
+                    { text: 'Priority support', included: true },
+                    { text: 'Custom domain', included: true },
+                    { text: 'Team management', included: true },
+                ]
+            }
+        ];
+
+        let activeCycle = 'monthly';
+        const cardsEl = document.getElementById('pricingCards');
+
+        function formatPrice(cents) {
+            if (cents === 0) return 'Free';
+            return CURRENCY + (cents / 100).toFixed(2);
+        }
+
+        function periodLabel(cycle) {
+            return cycle === 'monthly' ? '/mo' : cycle === 'quarterly' ? '/3mo' : '/yr';
+        }
+
+        function billedLabel(cycle, cents) {
+            if (cents === 0) return 'Free forever';
+            if (cycle === 'quarterly') return 'Billed ' + CURRENCY + (cents / 100).toFixed(2) + ' every 3 months';
+            if (cycle === 'yearly') return 'Billed ' + CURRENCY + (cents / 100).toFixed(2) + ' per year';
+            return 'Billed monthly';
+        }
+
+        function render() {
+            cardsEl.innerHTML = '';
+
+            PLANS.forEach(plan => {
+                const price = plan.prices[activeCycle];
+                const card = document.createElement('div');
+                card.className = 'pricing-card' + (plan.featured ? ' featured' : '');
+
+                const featuresHtml = plan.features.map(f =>
+                    `<li><span class="${f.included ? 'check' : 'cross'}">${f.included ? '\u2713' : '\u2717'}</span>${f.text}</li>`
+                ).join('');
+
+                card.innerHTML = `
+                    <div class="plan-name">${plan.name}</div>
+                    <div class="plan-desc">${plan.description}</div>
+                    <div class="plan-price">
+                        ${price === 0 ? 'Free' : `<span class="currency">${CURRENCY}</span>${(price / 100).toFixed(2)}`}
+                        ${price > 0 ? `<span class="period">${periodLabel(activeCycle)}</span>` : ''}
+                    </div>
+                    <div class="plan-billed">${billedLabel(activeCycle, price)}</div>
+                    <ul class="plan-features">${featuresHtml}</ul>
+                    <a href="${price === 0 ? '/register' : CHECKOUT_URL + '?plan=' + plan.id + '&cycle=' + activeCycle}" class="plan-btn ${plan.btnStyle}">${plan.btnText}</a>
+                `;
+
+                cardsEl.appendChild(card);
+            });
+        }
+
+        document.querySelectorAll('.cycle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.cycle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeCycle = btn.dataset.cycle;
+                render();
+            });
+        });
+
+        render();
+    </script>
+</body>
+</html>

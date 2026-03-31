@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search — Command Palette</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Demo trigger */
+        .demo-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .demo-hint {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .demo-keys {
+            display: flex;
+            gap: 4px;
+        }
+
+        .key {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-family: inherit;
+        }
+
+        /* Overlay */
+        .cmd-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 15vh;
+            z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+
+        .cmd-overlay.show { display: flex; }
+
+        .cmd-palette {
+            width: 100%;
+            max-width: 560px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            animation: slideDown 0.15s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Search input */
+        .cmd-input-wrap {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .cmd-input-wrap .icon { color: var(--text-dim); font-size: 1rem; }
+
+        .cmd-input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .cmd-input::placeholder { color: var(--text-dim); }
+
+        .cmd-scope {
+            font-size: 0.7rem;
+            background: var(--accent);
+            color: var(--accent-text);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .cmd-scope.show { display: block; }
+
+        .cmd-esc {
+            font-size: 0.65rem;
+            color: var(--text-faint);
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        /* Results area */
+        .cmd-results {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .cmd-group {
+            padding: 8px 0;
+        }
+
+        .cmd-group-label {
+            font-size: 0.65rem;
+            color: var(--text-faint);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 16px 6px;
+        }
+
+        .cmd-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: background 0.1s;
+        }
+
+        .cmd-item:hover, .cmd-item.active { background: var(--bg-input); }
+
+        .cmd-item .item-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .cmd-item .item-text { flex: 1; min-width: 0; }
+
+        .cmd-item .item-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .cmd-item .item-title mark {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .cmd-item .item-desc {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 1px;
+        }
+
+        .cmd-item .item-shortcut {
+            display: flex;
+            gap: 3px;
+            flex-shrink: 0;
+        }
+
+        .cmd-item .item-shortcut kbd {
+            font-size: 0.65rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-family: inherit;
+            color: var(--text-dim);
+        }
+
+        .cmd-empty {
+            padding: 32px 16px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        /* Footer */
+        .cmd-footer {
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cmd-footer-hints {
+            display: flex;
+            gap: 12px;
+            font-size: 0.65rem;
+            color: var(--text-faint);
+        }
+
+        .cmd-footer-hints span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cmd-footer-hints kbd {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0 4px;
+            font-family: inherit;
+            font-size: 0.6rem;
+        }
+
+        .cmd-footer-perf {
+            font-size: 0.6rem;
+            color: var(--text-faint);
+        }
+
+        /* Scrollbar */
+        .cmd-results::-webkit-scrollbar { width: 4px; }
+        .cmd-results::-webkit-scrollbar-track { background: transparent; }
+        .cmd-results::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div class="demo-content">
+        <div class="demo-hint">Press to open command palette:</div>
+        <div class="demo-keys">
+            <span class="key">&#8984; K</span>
+            <span style="color: var(--text-dim); font-size: 0.8rem;">or</span>
+            <span class="key">Ctrl K</span>
+        </div>
+    </div>
+
+    <!-- Command Palette -->
+    <div class="cmd-overlay" id="cmdOverlay">
+        <div class="cmd-palette" id="cmdPalette">
+            <div class="cmd-input-wrap">
+                <span class="icon">&#128270;</span>
+                <span class="cmd-scope" id="cmdScope"></span>
+                <input type="text" class="cmd-input" id="cmdInput"
+                       placeholder="Type a command or search..." autocomplete="off" maxlength="200">
+                <span class="cmd-esc">ESC</span>
+            </div>
+
+            <div class="cmd-results" id="cmdResults"></div>
+
+            <div class="cmd-footer">
+                <div class="cmd-footer-hints">
+                    <span><kbd>&#8593;</kbd><kbd>&#8595;</kbd> Navigate</span>
+                    <span><kbd>&#9166;</kbd> Select</span>
+                    <span><kbd>esc</kbd> Close</span>
+                    <span><kbd>#</kbd> Filter</span>
+                </div>
+                <div class="cmd-footer-perf" id="cmdPerf"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * COMMAND PALETTE SEARCH (Cmd+K)
+         *
+         * Features:
+         * - Opens with Cmd/Ctrl + K
+         * - Scoped search with prefixes: #pages, #users, #settings, >commands
+         * - Built-in actions (navigation, theme toggle, etc.)
+         * - Server search with debounce + abort
+         * - Client-side cache (30s)
+         * - Grouped results (Actions, Pages, Recent, Results)
+         * - Keyboard navigation (up/down/enter/esc/backspace to clear scope)
+         * - Input sanitization
+         * - Performance timing
+         * - Fuzzy matching for built-in actions
+         * - Rate limit: max 10 searches per 10 seconds
+         *
+         * Server endpoint:
+         * - GET /api/search?q=query&scope=scope
+         *   → { results: [{ id, title, description, url, type, icon }], total }
+         */
+
+        const API_BASE = '/api';
+        const MIN_QUERY = 1;
+        const DEBOUNCE_MS = 200;
+        const CACHE_TTL = 30000;
+        const RATE_LIMIT = 10;
+        const RATE_WINDOW = 10000;
+
+        const overlay = document.getElementById('cmdOverlay');
+        const palette = document.getElementById('cmdPalette');
+        const input = document.getElementById('cmdInput');
+        const resultsEl = document.getElementById('cmdResults');
+        const scopeEl = document.getElementById('cmdScope');
+        const perfEl = document.getElementById('cmdPerf');
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let abortController = null;
+        let currentScope = null;
+        const cache = new Map();
+        const rateBucket = [];
+
+        // Built-in actions
+        const ACTIONS = [
+            { id: 'home', title: 'Go Home', desc: 'Navigate to homepage', icon: '&#127968;', action: () => window.location.href = '/', shortcut: ['G', 'H'] },
+            { id: 'dashboard', title: 'Dashboard', desc: 'Open dashboard', icon: '&#128202;', action: () => window.location.href = '/dashboard' },
+            { id: 'profile', title: 'Profile Settings', desc: 'Edit your profile', icon: '&#128100;', action: () => window.location.href = '/account/profile' },
+            { id: 'password', title: 'Change Password', desc: 'Update your password', icon: '&#128273;', action: () => window.location.href = '/account/change-password' },
+            { id: 'sessions', title: 'Active Sessions', desc: 'Manage sessions', icon: '&#128187;', action: () => window.location.href = '/account/sessions' },
+            { id: '2fa', title: 'Two-Factor Auth', desc: 'Setup or manage 2FA', icon: '&#128272;', action: () => window.location.href = '/account/setup-2fa' },
+            { id: 'theme', title: 'Toggle Theme', desc: 'Switch light/dark mode', icon: '&#127769;', action: () => {
+                const html = document.documentElement;
+                html.setAttribute('data-theme', html.getAttribute('data-theme') === 'light' ? '' : 'light');
+            }, shortcut: ['T'] },
+            { id: 'logout', title: 'Sign Out', desc: 'Log out of your account', icon: '&#128682;', action: () => window.location.href = '/logout' },
+        ];
+
+        const SCOPES = {
+            '#': { label: 'Filter', placeholder: 'Filter by type... (#pages, #users, #settings)' },
+            '#pages': { label: 'Pages', placeholder: 'Search pages...' },
+            '#users': { label: 'Users', placeholder: 'Search users...' },
+            '#settings': { label: 'Settings', placeholder: 'Search settings...' },
+            '#files': { label: 'Files', placeholder: 'Search files...' },
+            '>': { label: 'Commands', placeholder: 'Run a command...' },
+        };
+
+        function sanitize(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function highlight(text, query) {
+            if (!query) return sanitize(text);
+            const safe = sanitize(text);
+            const safeQ = sanitize(query);
+            const regex = new RegExp('(' + safeQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return safe.replace(regex, '<mark>$1</mark>');
+        }
+
+        function fuzzyMatch(str, query) {
+            const lower = str.toLowerCase();
+            const q = query.toLowerCase();
+            if (lower.includes(q)) return true;
+            let qi = 0;
+            for (let i = 0; i < lower.length && qi < q.length; i++) {
+                if (lower[i] === q[qi]) qi++;
+            }
+            return qi === q.length;
+        }
+
+        function checkRateLimit() {
+            const now = Date.now();
+            while (rateBucket.length && now - rateBucket[0] > RATE_WINDOW) rateBucket.shift();
+            if (rateBucket.length >= RATE_LIMIT) return false;
+            rateBucket.push(now);
+            return true;
+        }
+
+        // Open / close
+        function open() {
+            overlay.classList.add('show');
+            input.value = '';
+            currentScope = null;
+            scopeEl.classList.remove('show');
+            input.placeholder = 'Type a command or search...';
+            input.focus();
+            showDefault();
+        }
+
+        function close() {
+            overlay.classList.remove('show');
+            input.value = '';
+            activeIndex = -1;
+        }
+
+        // Render
+        function renderItems(groups) {
+            resultsEl.innerHTML = '';
+            activeIndex = -1;
+            let itemIndex = 0;
+
+            groups.forEach(group => {
+                if (!group.items.length) return;
+                const groupEl = document.createElement('div');
+                groupEl.className = 'cmd-group';
+
+                if (group.label) {
+                    const label = document.createElement('div');
+                    label.className = 'cmd-group-label';
+                    label.textContent = group.label;
+                    groupEl.appendChild(label);
+                }
+
+                group.items.forEach(item => {
+                    const el = document.createElement('div');
+                    el.className = 'cmd-item';
+                    el.dataset.index = itemIndex++;
+
+                    let shortcutHtml = '';
+                    if (item.shortcut) {
+                        shortcutHtml = '<div class="item-shortcut">' + item.shortcut.map(k => '<kbd>' + k + '</kbd>').join('') + '</div>';
+                    }
+
+                    el.innerHTML = `
+                        <div class="item-icon">${item.icon || '&#128196;'}</div>
+                        <div class="item-text">
+                            <div class="item-title">${item.highlightedTitle || sanitize(item.title)}</div>
+                            ${item.desc ? `<div class="item-desc">${sanitize(item.desc)}</div>` : ''}
+                        </div>
+                        ${shortcutHtml}
+                    `;
+
+                    el.addEventListener('click', () => {
+                        if (item.action) { item.action(); close(); }
+                        else if (item.url) { window.location.href = item.url; close(); }
+                    });
+
+                    el.addEventListener('mouseenter', () => {
+                        resultsEl.querySelectorAll('.cmd-item').forEach(i => i.classList.remove('active'));
+                        el.classList.add('active');
+                        activeIndex = parseInt(el.dataset.index);
+                    });
+
+                    groupEl.appendChild(el);
+                });
+
+                resultsEl.appendChild(groupEl);
+            });
+
+            if (!itemIndex) {
+                resultsEl.innerHTML = '<div class="cmd-empty">No results found</div>';
+            }
+        }
+
+        function showDefault() {
+            renderItems([
+                { label: 'Actions', items: ACTIONS.slice(0, 5) },
+            ]);
+            perfEl.textContent = '';
+        }
+
+        async function doSearch(query) {
+            // Commands scope
+            if (currentScope === '>') {
+                const matches = ACTIONS.filter(a => fuzzyMatch(a.title, query) || fuzzyMatch(a.desc || '', query));
+                matches.forEach(m => m.highlightedTitle = highlight(m.title, query));
+                renderItems([{ label: 'Commands', items: matches }]);
+                return;
+            }
+
+            // Check rate limit
+            if (!checkRateLimit()) {
+                resultsEl.innerHTML = '<div class="cmd-empty">Too many searches. Slow down.</div>';
+                return;
+            }
+
+            // Check cache
+            const scope = currentScope || '';
+            const cacheKey = `${query}|${scope}`;
+            const cached = cache.get(cacheKey);
+            if (cached && Date.now() - cached.time < CACHE_TTL) {
+                showServerResults(cached.results, query, 0, true);
+                return;
+            }
+
+            if (abortController) abortController.abort();
+            abortController = new AbortController();
+
+            const start = performance.now();
+
+            try {
+                const params = new URLSearchParams({ q: query });
+                if (scope) params.set('scope', scope.replace('#', ''));
+
+                const res = await fetch(`${API_BASE}/search?${params}`, {
+                    credentials: 'include',
+                    signal: abortController.signal
+                });
+
+                const data = await res.json();
+                const time = Math.round(performance.now() - start);
+
+                cache.set(cacheKey, { results: data.results || [], time: Date.now() });
+                showServerResults(data.results || [], query, time, false);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    resultsEl.innerHTML = '<div class="cmd-empty">Search failed</div>';
+                }
+            }
+        }
+
+        function showServerResults(results, query, time, fromCache) {
+            perfEl.textContent = (fromCache ? 'Cached' : time + 'ms') + ' \u2022 ' + results.length + ' results';
+
+            // Also match actions
+            const actionMatches = ACTIONS.filter(a => fuzzyMatch(a.title, query)).slice(0, 3);
+            actionMatches.forEach(m => m.highlightedTitle = highlight(m.title, query));
+
+            const serverItems = results.map(r => ({
+                title: r.title,
+                highlightedTitle: highlight(r.title || '', query),
+                desc: r.description,
+                url: r.url,
+                icon: r.icon || '&#128196;',
+            }));
+
+            const groups = [];
+            if (actionMatches.length) groups.push({ label: 'Actions', items: actionMatches });
+            if (serverItems.length) groups.push({ label: 'Results', items: serverItems });
+
+            renderItems(groups);
+        }
+
+        // Input handler
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            let q = input.value;
+
+            // Detect scope prefix
+            if (!currentScope) {
+                for (const prefix of Object.keys(SCOPES)) {
+                    if (q.startsWith(prefix) && (q.length === prefix.length || q[prefix.length] === ' ')) {
+                        currentScope = prefix;
+                        scopeEl.textContent = SCOPES[prefix].label;
+                        scopeEl.classList.add('show');
+                        input.placeholder = SCOPES[prefix].placeholder;
+                        input.value = q.slice(prefix.length).trimStart();
+                        q = input.value;
+                        break;
+                    }
+                }
+            }
+
+            if (q.length < MIN_QUERY) {
+                if (currentScope === '>') {
+                    renderItems([{ label: 'All Commands', items: ACTIONS }]);
+                } else {
+                    showDefault();
+                }
+                return;
+            }
+
+            debounceTimer = setTimeout(() => doSearch(q), DEBOUNCE_MS);
+        });
+
+        // Backspace clears scope
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && input.value === '' && currentScope) {
+                currentScope = null;
+                scopeEl.classList.remove('show');
+                input.placeholder = 'Type a command or search...';
+                showDefault();
+                return;
+            }
+
+            const items = resultsEl.querySelectorAll('.cmd-item');
+            if (e.key === 'ArrowDown' && items.length) {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            } else if (e.key === 'ArrowUp' && items.length) {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, -1);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) items[activeIndex].click();
+                return;
+            } else if (e.key === 'Escape') {
+                close();
+                return;
+            } else return;
+
+            items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+            if (activeIndex >= 0 && items[activeIndex]) items[activeIndex].scrollIntoView({ block: 'nearest' });
+        });
+
+        // Cmd/Ctrl + K
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                overlay.classList.contains('show') ? close() : open();
+            }
+        });
+
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        // Stop palette click from closing
+        palette.addEventListener('click', (e) => e.stopPropagation());
+    </script>
+</body>
+</html>

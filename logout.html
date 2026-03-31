@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signed Out</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 400px; padding: 20px; text-align: center; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 48px 32px;
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+
+        .desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="icon">&#128075;</div>
+            <h1>Signed Out</h1>
+            <div class="desc">You've been signed out successfully. Your session has been cleared.</div>
+            <a href="/login" class="btn-primary" id="loginLink">Sign In Again</a>
+            <a href="/" class="btn-secondary">Go Home</a>
+        </div>
+    </div>
+    <script>
+        /**
+         * LOGOUT PAGE
+         *
+         * Option 1: Redirect here after calling POST /api/auth/logout
+         * Option 2: This page calls logout on load (uncomment below)
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = '/2-medium.html';
+
+        // Uncomment to auto-logout on page load:
+        // (async () => {
+        //     try {
+        //         await fetch(`${API_BASE}/auth/logout`, {
+        //             method: 'POST',
+        //             credentials: 'include'
+        //         });
+        //     } catch {}
+        //     localStorage.removeItem('user');
+        // })();
+
+        // Clear client-side storage
+        localStorage.removeItem('user');
+        sessionStorage.clear();
+    </script>
+</body>
+</html>

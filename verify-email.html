@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Email</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container { width: 100%; max-width: 420px; padding: 20px; text-align: center; }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 48px 32px;
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+        }
+
+        .icon.pending { background: rgba(59, 130, 246, 0.1); }
+        .icon.success { background: rgba(34, 197, 94, 0.1); }
+        .icon.error { background: rgba(239, 68, 68, 0.1); }
+
+        h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 8px; }
+
+        .desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .btn-primary {
+            padding: 12px 20px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-secondary {
+            padding: 10px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            transition: border-color 0.2s;
+        }
+
+        .btn-secondary:hover { border-color: var(--border-hover); }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .state { display: none; }
+        .state.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <!-- Verifying state -->
+            <div class="state active" id="stateVerifying">
+                <div class="spinner"></div>
+                <h1>Verifying Email</h1>
+                <div class="desc">Please wait while we verify your email address...</div>
+            </div>
+
+            <!-- Success state -->
+            <div class="state" id="stateSuccess">
+                <div class="icon success">&#9989;</div>
+                <h1>Email Verified</h1>
+                <div class="desc">Your email has been verified successfully. You can now sign in.</div>
+                <a href="/login" class="btn-primary" id="loginLink">Sign In</a>
+            </div>
+
+            <!-- Already verified -->
+            <div class="state" id="stateAlready">
+                <div class="icon success">&#9989;</div>
+                <h1>Already Verified</h1>
+                <div class="desc">This email has already been verified.</div>
+                <a href="/login" class="btn-primary">Sign In</a>
+            </div>
+
+            <!-- Expired -->
+            <div class="state" id="stateExpired">
+                <div class="icon error">&#9203;</div>
+                <h1>Link Expired</h1>
+                <div class="desc">This verification link has expired. Please request a new one.</div>
+                <button class="btn-primary" id="resendBtn">Resend Verification Email</button>
+                <a href="/login" class="btn-secondary">Back to Login</a>
+            </div>
+
+            <!-- Error -->
+            <div class="state" id="stateError">
+                <div class="icon error">&#10060;</div>
+                <h1>Verification Failed</h1>
+                <div class="desc" id="errorDesc">Something went wrong. Please try again.</div>
+                <a href="/login" class="btn-primary">Back to Login</a>
+            </div>
+        </div>
+    </div>
+    <script>
+        /**
+         * EMAIL VERIFICATION LANDING PAGE
+         *
+         * User arrives here from email link with ?token=xxx or ?code=xxx&email=xxx
+         *
+         * Server endpoints:
+         * - POST /api/auth/verify-email → { token } or { email, code }
+         * - POST /api/auth/resend-verify → { email }
+         */
+
+        const API_BASE = '/api';
+        const LOGIN_URL = '/2-medium.html';
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const code = params.get('code');
+        const email = params.get('email');
+
+        function showState(id) {
+            document.querySelectorAll('.state').forEach(el => el.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        async function verify() {
+            if (!token && !code) {
+                showState('stateError');
+                document.getElementById('errorDesc').textContent = 'Missing verification token.';
+                return;
+            }
+
+            try {
+                const body = token ? { token } : { email, code };
+
+                const res = await fetch(`${API_BASE}/auth/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showState('stateSuccess');
+                } else if (res.status === 409) {
+                    showState('stateAlready');
+                } else if (res.status === 410) {
+                    showState('stateExpired');
+                } else {
+                    showState('stateError');
+                    document.getElementById('errorDesc').textContent = data.error || 'Verification failed.';
+                }
+            } catch {
+                showState('stateError');
+                document.getElementById('errorDesc').textContent = 'Connection error. Please try again.';
+            }
+        }
+
+        // Resend
+        document.getElementById('resendBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('resendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                await fetch(`${API_BASE}/auth/resend-verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email || '' })
+                });
+                btn.textContent = 'Email Sent!';
+            } catch {
+                btn.textContent = 'Failed — Try Again';
+                btn.disabled = false;
+            }
+        });
+
+        verify();
+    </script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--text-primary); }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .filter-btn:hover { border-color: var(--border-hover); color: var(--text-primary); }
+        .filter-btn.active {
+            background: var(--accent);
+            color: var(--accent-text);
+            border-color: var(--accent);
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 8px;
+            bottom: 0;
+            width: 1px;
+            background: var(--border);
+        }
+
+        .entry {
+            position: relative;
+            margin-bottom: 36px;
+        }
+        .entry::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 8px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: var(--bg-page);
+            border: 2px solid var(--border);
+        }
+        .entry:first-child::before {
+            border-color: var(--accent);
+            background: var(--accent);
+        }
+
+        .entry-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .version {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .badge-feature {
+            background: color-mix(in srgb, var(--accent) 15%, transparent);
+            color: var(--accent);
+        }
+        .badge-fix {
+            background: color-mix(in srgb, var(--color-error) 15%, transparent);
+            color: var(--color-error);
+        }
+        .badge-improvement {
+            background: color-mix(in srgb, var(--color-warning) 15%, transparent);
+            color: var(--color-warning);
+        }
+
+        .entry-date {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .entry-body {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .entry-body ul {
+            padding-left: 18px;
+            margin-top: 6px;
+        }
+        .entry-body li { margin-bottom: 3px; }
+
+        .entry.hidden { display: none; }
+
+        @media (max-width: 480px) {
+            .timeline { padding-left: 24px; }
+            .entry::before { left: -24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to templates</a>
+        <h1>Changelog</h1>
+        <p class="subtitle">New updates and improvements.</p>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="feature">Features</button>
+            <button class="filter-btn" data-filter="fix">Fixes</button>
+            <button class="filter-btn" data-filter="improvement">Improvements</button>
+        </div>
+
+        <div class="timeline" id="timeline">
+            <div class="entry" data-type="feature">
+                <div class="entry-header">
+                    <span class="version">v2.4.0</span>
+                    <span class="badge badge-feature">Feature</span>
+                    <span class="entry-date">March 25, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Added two-factor authentication with TOTP support.</p>
+                    <ul>
+                        <li>QR code setup flow for authenticator apps</li>
+                        <li>Backup recovery codes generated on enable</li>
+                        <li>Option to require 2FA for all team members</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="entry" data-type="fix">
+                <div class="entry-header">
+                    <span class="version">v2.3.2</span>
+                    <span class="badge badge-fix">Fix</span>
+                    <span class="entry-date">March 18, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Fixed session expiration not redirecting to login page. Users on expired sessions would see a blank page instead of the login form.</p>
+                </div>
+            </div>
+
+            <div class="entry" data-type="improvement">
+                <div class="entry-header">
+                    <span class="version">v2.3.1</span>
+                    <span class="badge badge-improvement">Improvement</span>
+                    <span class="entry-date">March 10, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Improved password strength indicator with real-time feedback and entropy calculation. Now shows estimated crack time.</p>
+                </div>
+            </div>
+
+            <div class="entry" data-type="feature">
+                <div class="entry-header">
+                    <span class="version">v2.3.0</span>
+                    <span class="badge badge-feature">Feature</span>
+                    <span class="entry-date">February 28, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Introduced magic link authentication as an alternative to passwords.</p>
+                    <ul>
+                        <li>One-click email login with secure token</li>
+                        <li>Configurable link expiration (default 15 min)</li>
+                        <li>Rate limiting to prevent abuse</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="entry" data-type="fix">
+                <div class="entry-header">
+                    <span class="version">v2.2.1</span>
+                    <span class="badge badge-fix">Fix</span>
+                    <span class="entry-date">February 15, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Fixed OAuth callback failing when redirect URI contained query parameters. Added proper URL encoding for state parameter.</p>
+                </div>
+            </div>
+
+            <div class="entry" data-type="improvement">
+                <div class="entry-header">
+                    <span class="version">v2.2.0</span>
+                    <span class="badge badge-improvement">Improvement</span>
+                    <span class="entry-date">February 1, 2026</span>
+                </div>
+                <div class="entry-body">
+                    <p>Redesigned all form templates with improved mobile responsiveness and accessibility.</p>
+                    <ul>
+                        <li>WCAG 2.1 AA compliant focus indicators</li>
+                        <li>Better touch targets on mobile (min 44px)</li>
+                        <li>Reduced motion support via prefers-reduced-motion</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var buttons = document.querySelectorAll('.filter-btn');
+        var entries = document.querySelectorAll('.entry');
+
+        buttons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                buttons.forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                var filter = btn.dataset.filter;
+                entries.forEach(function(entry) {
+                    if (filter === 'all' || entry.dataset.type === filter) {
+                        entry.classList.remove('hidden');
+                    } else {
+                        entry.classList.add('hidden');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

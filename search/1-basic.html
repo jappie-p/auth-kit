@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search — Basic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding-top: 10vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .search-container {
+            width: 100%;
+            max-width: 560px;
+            padding: 20px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 14px 12px 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-input::placeholder { color: var(--text-dim); }
+
+        .search-results {
+            margin-top: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .search-results.show { display: block; }
+
+        .result-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-item:last-child { border-bottom: none; }
+        .result-item:hover { background: var(--bg-input); }
+
+        .result-item .title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .result-item .desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .result-item .title mark {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        .search-empty {
+            padding: 24px 16px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        .search-loading {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .search-meta {
+            padding: 8px 16px;
+            font-size: 0.7rem;
+            color: var(--text-faint);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon">&#128270;</span>
+            <input type="text" class="search-input" id="searchInput"
+                   placeholder="Search..." autocomplete="off" autofocus maxlength="200">
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <script>
+        /**
+         * BASIC SEARCH
+         *
+         * Features:
+         * - Debounced input (300ms)
+         * - Input sanitization (strips HTML tags)
+         * - Query length limit (200 chars)
+         * - Highlight matching text
+         * - Loading state
+         * - Result count + response time
+         * - Click handler on results
+         * - Keyboard navigation (up/down/enter/escape)
+         *
+         * Server endpoint:
+         * - GET /api/search?q=query → { results: [{ id, title, description, url }], total }
+         */
+
+        const API_BASE = '/api';
+        const MIN_QUERY = 2;
+        const DEBOUNCE_MS = 300;
+
+        const input = document.getElementById('searchInput');
+        const resultsEl = document.getElementById('searchResults');
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let currentResults = [];
+        let abortController = null;
+
+        // Sanitize — strip HTML
+        function sanitize(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Highlight match
+        function highlight(text, query) {
+            const safe = sanitize(text);
+            const safeQuery = sanitize(query);
+            if (!safeQuery) return safe;
+            const regex = new RegExp('(' + safeQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            return safe.replace(regex, '<mark>$1</mark>');
+        }
+
+        function showResults(results, query, time) {
+            currentResults = results;
+            activeIndex = -1;
+
+            if (!results.length) {
+                resultsEl.innerHTML = '<div class="search-empty">No results found</div>';
+                resultsEl.classList.add('show');
+                return;
+            }
+
+            let html = '';
+            results.forEach((r, i) => {
+                html += `<div class="result-item" data-index="${i}" data-url="${sanitize(r.url || '')}">
+                    <div class="title">${highlight(r.title || '', query)}</div>
+                    ${r.description ? `<div class="desc">${sanitize(r.description)}</div>` : ''}
+                </div>`;
+            });
+
+            html += `<div class="search-meta">
+                <span>${results.length} result${results.length !== 1 ? 's' : ''}</span>
+                <span>${time}ms</span>
+            </div>`;
+
+            resultsEl.innerHTML = html;
+            resultsEl.classList.add('show');
+
+            resultsEl.querySelectorAll('.result-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const url = el.dataset.url;
+                    if (url) window.location.href = url;
+                });
+            });
+        }
+
+        function hideResults() {
+            resultsEl.classList.remove('show');
+            activeIndex = -1;
+        }
+
+        async function search(query) {
+            if (abortController) abortController.abort();
+            abortController = new AbortController();
+
+            resultsEl.innerHTML = '<div class="search-loading">Searching...</div>';
+            resultsEl.classList.add('show');
+
+            const start = performance.now();
+
+            try {
+                const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`, {
+                    credentials: 'include',
+                    signal: abortController.signal
+                });
+                const data = await res.json();
+                const time = Math.round(performance.now() - start);
+                showResults(data.results || [], query, time);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    resultsEl.innerHTML = '<div class="search-empty">Search failed</div>';
+                    resultsEl.classList.add('show');
+                }
+            }
+        }
+
+        // Debounced input
+        input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const q = input.value.trim();
+            if (q.length < MIN_QUERY) { hideResults(); return; }
+            debounceTimer = setTimeout(() => search(q), DEBOUNCE_MS);
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = resultsEl.querySelectorAll('.result-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                items[activeIndex].click();
+                return;
+            } else if (e.key === 'Escape') {
+                hideResults();
+                input.blur();
+                return;
+            } else {
+                return;
+            }
+
+            items.forEach((el, i) => {
+                el.style.background = i === activeIndex ? 'var(--bg-input)' : '';
+            });
+
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) hideResults();
+        });
+    </script>
+</body>
+</html>

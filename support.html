@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            margin-bottom: 24px;
+            transition: color 0.15s;
+        }
+        .back-link:hover { color: var(--text-primary); }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: border-color 0.15s;
+            outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23737373' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 480px) {
+            .row { grid-template-columns: 1fr; }
+        }
+
+        .priority-options {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        @media (max-width: 480px) {
+            .priority-options { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .priority-option input { display: none; }
+        .priority-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .priority-option input:checked + label {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 8%, transparent);
+        }
+        .priority-option label:hover {
+            border-color: var(--border-hover);
+        }
+
+        .dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .dropzone:hover, .dropzone.dragover {
+            border-color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 4%, transparent);
+        }
+        .dropzone-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+        .dropzone-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .dropzone-text span {
+            color: var(--accent);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        .dropzone-hint {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+        .file-preview {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+        .file-preview.visible { display: flex; }
+        .file-preview .file-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+        .file-preview .file-remove {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0 4px;
+            transition: color 0.15s;
+        }
+        .file-preview .file-remove:hover { color: var(--color-error); }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            margin-top: 8px;
+        }
+        .submit-btn:hover { opacity: 0.9; }
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-state {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .success-state.visible { display: block; }
+        .success-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: color-mix(in srgb, var(--color-success) 12%, transparent);
+            color: var(--color-success);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+        .success-state h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .success-state p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .ticket-ref {
+            display: inline-block;
+            font-family: monospace;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 8%, transparent);
+            padding: 6px 14px;
+            border-radius: 6px;
+            margin-top: 12px;
+        }
+        .success-state .back-btn {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 10px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: border-color 0.15s;
+        }
+        .success-state .back-btn:hover { border-color: var(--border-hover); }
+
+        .form-wrapper { display: block; }
+        .form-wrapper.hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">&larr; Back to templates</a>
+
+        <div class="form-wrapper" id="formWrapper">
+            <h1>Contact Support</h1>
+            <p class="subtitle">We'll get back to you within 24 hours.</p>
+
+            <form id="supportForm" novalidate>
+                <div class="row">
+                    <div class="form-group">
+                        <label for="email">Email address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category" name="category" required>
+                            <option value="" disabled selected>Select a category</option>
+                            <option value="general">General</option>
+                            <option value="bug">Bug Report</option>
+                            <option value="feature">Feature Request</option>
+                            <option value="billing">Billing</option>
+                            <option value="security">Security</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" placeholder="Brief description of your issue" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" placeholder="Describe your issue in detail..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Attachment</label>
+                    <div class="dropzone" id="dropzone">
+                        <div class="dropzone-icon">&#128206;</div>
+                        <div class="dropzone-text">Drag & drop a file or <span id="browseBtn">browse</span></div>
+                        <div class="dropzone-hint">Max 10 MB &mdash; PNG, JPG, PDF, ZIP</div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.pdf,.zip" hidden>
+                    <div class="file-preview" id="filePreview">
+                        <span class="file-name" id="fileName"></span>
+                        <button type="button" class="file-remove" id="fileRemove">&times;</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Priority</label>
+                    <div class="priority-options">
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="pLow" value="low" checked>
+                            <label for="pLow">Low</label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="pMedium" value="medium">
+                            <label for="pMedium">Medium</label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="pHigh" value="high">
+                            <label for="pHigh">High</label>
+                        </div>
+                        <div class="priority-option">
+                            <input type="radio" name="priority" id="pUrgent" value="urgent">
+                            <label for="pUrgent">Urgent</label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">Submit Ticket</button>
+            </form>
+        </div>
+
+        <div class="success-state" id="successState">
+            <div class="success-icon">&#10003;</div>
+            <h2>Ticket Created</h2>
+            <p>We've received your request and will respond shortly.</p>
+            <div class="ticket-ref" id="ticketRef">TKT-000000</div>
+            <br>
+            <a href="support.html" class="back-btn">Submit another ticket</a>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('supportForm');
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const fileName = document.getElementById('fileName');
+        const fileRemove = document.getElementById('fileRemove');
+        const browseBtn = document.getElementById('browseBtn');
+        const submitBtn = document.getElementById('submitBtn');
+
+        let selectedFile = null;
+
+        browseBtn.addEventListener('click', () => fileInput.click());
+        dropzone.addEventListener('click', () => fileInput.click());
+
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) setFile(fileInput.files[0]);
+        });
+
+        function setFile(file) {
+            selectedFile = file;
+            fileName.textContent = file.name;
+            filePreview.classList.add('visible');
+        }
+
+        fileRemove.addEventListener('click', () => {
+            selectedFile = null;
+            fileInput.value = '';
+            filePreview.classList.remove('visible');
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const data = new FormData(form);
+            if (selectedFile) data.append('attachment', selectedFile);
+
+            try {
+                const res = await fetch('/api/support/ticket', { method: 'POST', body: data });
+                const json = await res.json();
+                showSuccess(json.ticketId || Math.floor(100000 + Math.random() * 900000));
+            } catch {
+                showSuccess(Math.floor(100000 + Math.random() * 900000));
+            }
+        });
+
+        function showSuccess(id) {
+            document.getElementById('formWrapper').classList.add('hidden');
+            document.getElementById('ticketRef').textContent = 'TKT-' + id;
+            document.getElementById('successState').classList.add('visible');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Kit — Template Browser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-page);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            padding: 40px 20px 80px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 6px 12px;
+        }
+
+        .theme-toggle span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            cursor: pointer;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--border);
+            border-radius: 11px;
+            transition: background 0.3s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--text-primary);
+            left: 3px;
+            top: 3px;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--accent);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+            background: var(--accent-text);
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .stat .number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* Sections */
+        .section {
+            margin-bottom: 36px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .section-count {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 2px 10px;
+        }
+
+        /* Card grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .template-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: border-color 0.2s, transform 0.1s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--badge-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .card-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .card-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: auto;
+        }
+
+        .card-tag {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--bg-input);
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .card-tag.green { color: #22c55e; border-color: rgba(34,197,94,0.3); }
+        .card-tag.blue { color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+        .card-tag.purple { color: #a855f7; border-color: rgba(168,85,247,0.3); }
+        .card-tag.red { color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+        /* Backend section */
+        .backend-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 10px;
+        }
+
+        .backend-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .backend-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .backend-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .backend-cmd {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Geist Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--accent);
+            user-select: all;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 48px;
+            text-align: center;
+            color: var(--text-faint);
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Auth Kit</h1>
+                <p>45 drop-in templates, 1 theme file, any project</p>
+            </div>
+            <div class="header-right">
+                <div class="theme-toggle">
+                    <span>&#9728;&#65039;</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span>&#127769;</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><div class="number">45</div><div class="label">Templates</div></div>
+            <div class="stat"><div class="number">12</div><div class="label">Categories</div></div>
+            <div class="stat"><div class="number">1</div><div class="label">Theme File</div></div>
+            <div class="stat"><div class="number">3</div><div class="label">Backend Stacks</div></div>
+        </div>
+
+        <!-- Login -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Login</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="1-basic.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Basic</div>
+                    <div class="card-desc">Username + password, minimal</div>
+                    <div class="card-tags"><span class="card-tag green">Tier 1</span></div>
+                </a>
+                <a href="2-medium.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Medium</div>
+                    <div class="card-desc">Rate limiting, strength bar, safe redirect</div>
+                    <div class="card-tags"><span class="card-tag blue">Tier 2</span></div>
+                </a>
+                <a href="3-strong.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Strong</div>
+                    <div class="card-desc">Honeypot, challenge token, optional 2FA</div>
+                    <div class="card-tags"><span class="card-tag purple">Tier 3</span></div>
+                </a>
+                <a href="4-super.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Super</div>
+                    <div class="card-desc">Mandatory 2FA, session takeover, noindex</div>
+                    <div class="card-tags"><span class="card-tag red">Tier 4</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Register -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Register</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="register/1-basic.html" class="template-card">
+                    <div class="card-icon">&#128221;</div>
+                    <div class="card-title">Basic</div>
+                    <div class="card-desc">Username, email, password</div>
+                    <div class="card-tags"><span class="card-tag green">Tier 1</span></div>
+                </a>
+                <a href="register/2-medium.html" class="template-card">
+                    <div class="card-icon">&#128221;</div>
+                    <div class="card-title">Medium</div>
+                    <div class="card-desc">Confirm password, strength badges</div>
+                    <div class="card-tags"><span class="card-tag blue">Tier 2</span></div>
+                </a>
+                <a href="register/3-strong.html" class="template-card">
+                    <div class="card-icon">&#128221;</div>
+                    <div class="card-title">Strong</div>
+                    <div class="card-desc">Email verification, terms, honeypot</div>
+                    <div class="card-tags"><span class="card-tag purple">Tier 3</span></div>
+                </a>
+                <a href="register/4-super.html" class="template-card">
+                    <div class="card-icon">&#128221;</div>
+                    <div class="card-title">Super</div>
+                    <div class="card-desc">Invite code, mandatory 2FA setup</div>
+                    <div class="card-tags"><span class="card-tag red">Tier 4</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Forgot Password -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Forgot Password</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="forgot-password/1-basic.html" class="template-card">
+                    <div class="card-icon">&#128272;</div>
+                    <div class="card-title">Basic</div>
+                    <div class="card-desc">Email input, no enumeration</div>
+                    <div class="card-tags"><span class="card-tag green">Tier 1</span></div>
+                </a>
+                <a href="forgot-password/2-medium.html" class="template-card">
+                    <div class="card-icon">&#128272;</div>
+                    <div class="card-title">Medium</div>
+                    <div class="card-desc">Code entry, new password, resend</div>
+                    <div class="card-tags"><span class="card-tag blue">Tier 2</span></div>
+                </a>
+                <a href="forgot-password/3-strong.html" class="template-card">
+                    <div class="card-icon">&#128272;</div>
+                    <div class="card-title">Strong</div>
+                    <div class="card-desc">3-step flow, code attempt tracking</div>
+                    <div class="card-tags"><span class="card-tag purple">Tier 3</span></div>
+                </a>
+                <a href="forgot-password/4-super.html" class="template-card">
+                    <div class="card-icon">&#128272;</div>
+                    <div class="card-title">Super</div>
+                    <div class="card-desc">4-step with 2FA verification</div>
+                    <div class="card-tags"><span class="card-tag red">Tier 4</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Account -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Account</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="account/profile.html" class="template-card">
+                    <div class="card-icon">&#128100;</div>
+                    <div class="card-title">Profile</div>
+                    <div class="card-desc">Edit name, email, avatar, delete account</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+                <a href="account/change-password.html" class="template-card">
+                    <div class="card-icon">&#128273;</div>
+                    <div class="card-title">Change Password</div>
+                    <div class="card-desc">Current + new, strength bar, match check</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+                <a href="account/setup-2fa.html" class="template-card">
+                    <div class="card-icon">&#128272;</div>
+                    <div class="card-title">Setup 2FA</div>
+                    <div class="card-desc">QR code, verify, backup codes</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+                <a href="account/sessions.html" class="template-card">
+                    <div class="card-icon">&#128187;</div>
+                    <div class="card-title">Active Sessions</div>
+                    <div class="card-desc">View and revoke sessions</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Search</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="search/1-basic.html" class="template-card">
+                    <div class="card-icon">&#128270;</div>
+                    <div class="card-title">Basic</div>
+                    <div class="card-desc">Dropdown results, keyboard nav</div>
+                    <div class="card-tags"><span class="card-tag">Search</span></div>
+                </a>
+                <a href="search/2-filtered.html" class="template-card">
+                    <div class="card-icon">&#128270;</div>
+                    <div class="card-title">Filtered</div>
+                    <div class="card-desc">Category chips, sort, cache</div>
+                    <div class="card-tags"><span class="card-tag">Search</span></div>
+                </a>
+                <a href="search/3-command.html" class="template-card">
+                    <div class="card-icon">&#9000;</div>
+                    <div class="card-title">Command Palette</div>
+                    <div class="card-desc">Cmd+K, scoped search, actions</div>
+                    <div class="card-tags"><span class="card-tag">Search</span></div>
+                </a>
+                <a href="search/4-table.html" class="template-card">
+                    <div class="card-icon">&#128202;</div>
+                    <div class="card-title">Data Table</div>
+                    <div class="card-desc">Sort, filter, paginate, export, bulk</div>
+                    <div class="card-tags"><span class="card-tag">Search</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Payments -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Payments</div>
+                <span class="section-count">5 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="payments/pricing.html" class="template-card">
+                    <div class="card-icon">&#128176;</div>
+                    <div class="card-title">Pricing Page</div>
+                    <div class="card-desc">3-tier cards, cycle toggle, features</div>
+                    <div class="card-tags"><span class="card-tag">Payments</span></div>
+                </a>
+                <a href="payments/stripe-checkout.html" class="template-card">
+                    <div class="card-icon">&#128179;</div>
+                    <div class="card-title">Stripe Checkout</div>
+                    <div class="card-desc">Card, iDEAL, Bancontact, coupons</div>
+                    <div class="card-tags"><span class="card-tag">Stripe</span></div>
+                </a>
+                <a href="payments/mollie-checkout.html" class="template-card">
+                    <div class="card-icon">&#127974;</div>
+                    <div class="card-title">Mollie Checkout</div>
+                    <div class="card-desc">7 methods, bank picker, billing cycle</div>
+                    <div class="card-tags"><span class="card-tag">Mollie</span></div>
+                </a>
+                <a href="payments/success.html" class="template-card">
+                    <div class="card-icon">&#10003;</div>
+                    <div class="card-title">Payment Success</div>
+                    <div class="card-desc">Receipt with transaction details</div>
+                    <div class="card-tags"><span class="card-tag">Payments</span></div>
+                </a>
+                <a href="payments/failed.html" class="template-card">
+                    <div class="card-icon">&#10007;</div>
+                    <div class="card-title">Payment Failed</div>
+                    <div class="card-desc">Error reason, retry link</div>
+                    <div class="card-tags"><span class="card-tag">Payments</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Error Pages -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Error Pages</div>
+                <span class="section-count">6 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="error/403.html" class="template-card">
+                    <div class="card-icon">&#128683;</div>
+                    <div class="card-title">403 Forbidden</div>
+                    <div class="card-desc">Access denied</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+                <a href="error/404.html" class="template-card">
+                    <div class="card-icon">&#128270;</div>
+                    <div class="card-title">404 Not Found</div>
+                    <div class="card-desc">Page missing</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+                <a href="error/500.html" class="template-card">
+                    <div class="card-icon">&#9888;&#65039;</div>
+                    <div class="card-title">500 Server Error</div>
+                    <div class="card-desc">Error reference ID</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+                <a href="error/expired.html" class="template-card">
+                    <div class="card-icon">&#9203;</div>
+                    <div class="card-title">Session Expired</div>
+                    <div class="card-desc">Auto-redirect countdown</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+                <a href="error/maintenance.html" class="template-card">
+                    <div class="card-icon">&#128736;&#65039;</div>
+                    <div class="card-title">Maintenance</div>
+                    <div class="card-desc">ETA countdown, refresh</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+                <a href="error/locked.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Account Locked</div>
+                    <div class="card-desc">Permanent or timed lock</div>
+                    <div class="card-tags"><span class="card-tag">Error</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Standalone -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Standalone</div>
+                <span class="section-count">2 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="verify-email.html" class="template-card">
+                    <div class="card-icon">&#9993;</div>
+                    <div class="card-title">Verify Email</div>
+                    <div class="card-desc">Landing page from email link</div>
+                    <div class="card-tags"><span class="card-tag">Auth</span></div>
+                </a>
+                <a href="logout.html" class="template-card">
+                    <div class="card-icon">&#128075;</div>
+                    <div class="card-title">Logout</div>
+                    <div class="card-desc">Signed out confirmation</div>
+                    <div class="card-tags"><span class="card-tag">Auth</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Dashboard & Onboarding -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Dashboard & Onboarding</div>
+                <span class="section-count">3 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="dashboard.html" class="template-card">
+                    <div class="card-icon">&#128202;</div>
+                    <div class="card-title">Dashboard</div>
+                    <div class="card-desc">Stat cards, activity feed, quick actions</div>
+                    <div class="card-tags"><span class="card-tag">Starter</span></div>
+                </a>
+                <a href="onboarding.html" class="template-card">
+                    <div class="card-icon">&#128075;</div>
+                    <div class="card-title">Onboarding Wizard</div>
+                    <div class="card-desc">4-step welcome flow with animated transitions</div>
+                    <div class="card-tags"><span class="card-tag">Starter</span></div>
+                </a>
+                <a href="coming-soon.html" class="template-card">
+                    <div class="card-icon">&#128640;</div>
+                    <div class="card-title">Coming Soon</div>
+                    <div class="card-desc">Animated particles, countdown, waitlist signup</div>
+                    <div class="card-tags"><span class="card-tag">Launch</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Account (extended) -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Account (more)</div>
+                <span class="section-count">2 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="account/settings.html" class="template-card">
+                    <div class="card-icon">&#9881;</div>
+                    <div class="card-title">Settings</div>
+                    <div class="card-desc">General, notifications, appearance, danger zone</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+                <a href="account/invite.html" class="template-card">
+                    <div class="card-icon">&#128101;</div>
+                    <div class="card-title">Team / Invite</div>
+                    <div class="card-desc">Invite by email, pending list, role management</div>
+                    <div class="card-tags"><span class="card-tag">Account</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Support & Legal -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Support & Legal</div>
+                <span class="section-count">4 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="support.html" class="template-card">
+                    <div class="card-icon">&#128172;</div>
+                    <div class="card-title">Contact / Support</div>
+                    <div class="card-desc">Category, file upload, priority, ticket #</div>
+                    <div class="card-tags"><span class="card-tag">Support</span></div>
+                </a>
+                <a href="changelog.html" class="template-card">
+                    <div class="card-icon">&#128220;</div>
+                    <div class="card-title">Changelog</div>
+                    <div class="card-desc">Version timeline, type filters, badges</div>
+                    <div class="card-tags"><span class="card-tag">Content</span></div>
+                </a>
+                <a href="legal/terms.html" class="template-card">
+                    <div class="card-icon">&#128220;</div>
+                    <div class="card-title">Terms of Service</div>
+                    <div class="card-desc">Styled legal page with sidebar TOC</div>
+                    <div class="card-tags"><span class="card-tag">Legal</span></div>
+                </a>
+                <a href="legal/privacy.html" class="template-card">
+                    <div class="card-icon">&#128274;</div>
+                    <div class="card-title">Privacy Policy</div>
+                    <div class="card-desc">GDPR-ready template with TOC</div>
+                    <div class="card-tags"><span class="card-tag">Legal</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Components -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Components</div>
+                <span class="section-count">2 templates</span>
+            </div>
+            <div class="card-grid">
+                <a href="components/toasts.html" class="template-card">
+                    <div class="card-icon">&#128276;</div>
+                    <div class="card-title">Toast Notifications</div>
+                    <div class="card-desc">4 types, auto-dismiss, stacking, copy-paste ready</div>
+                    <div class="card-tags"><span class="card-tag">Component</span></div>
+                </a>
+                <a href="components/cookie-banner.html" class="template-card">
+                    <div class="card-icon">&#127850;</div>
+                    <div class="card-title">Cookie Consent</div>
+                    <div class="card-desc">GDPR banner, manage preferences modal</div>
+                    <div class="card-tags"><span class="card-tag">Component</span></div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Backend -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">Backend Starters</div>
+                <span class="section-count">3 stacks</span>
+            </div>
+            <div class="backend-cards">
+                <div class="backend-card">
+                    <h3>Node.js (Express)</h3>
+                    <p>Requires: Node.js + npm install express</p>
+                    <div class="backend-cmd">node backend/server-node.js</div>
+                </div>
+                <div class="backend-card">
+                    <h3>PHP (no framework)</h3>
+                    <p>Requires: PHP 7+ (built-in server or Apache/XAMPP)</p>
+                    <div class="backend-cmd">php -S localhost:3000 backend/server-php.php</div>
+                </div>
+                <div class="backend-card">
+                    <h3>Python (no dependencies)</h3>
+                    <p>Requires: Python 3.6+ (no pip install needed)</p>
+                    <div class="backend-cmd">python3 backend/server-python.py</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            Auth Kit — 45 templates, 1 theme, any stack
+        </div>
+    </div>
+
+    <script>
+        const toggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'light') {
+            html.setAttribute('data-theme', 'light');
+            toggle.checked = false;
+        } else {
+            toggle.checked = true;
+        }
+
+        toggle.addEventListener('change', () => {
+            if (toggle.checked) {
+                html.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            }
+        });
+    </script>
+</body>
+</html>
