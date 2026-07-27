@@ -536,6 +536,11 @@
             return div.innerHTML;
         }
 
+        // Escape for use inside a quoted HTML attribute (sanitize() alone doesn't cover quotes)
+        function attrEscape(str) {
+            return sanitize(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         function highlight(text, query) {
             if (!query) return sanitize(text);
             const safe = sanitize(text);
@@ -578,7 +583,7 @@
                 const statusClass = r.status === 'active' ? 'active' : r.status === 'pending' ? 'pending' : 'inactive';
 
                 tr.innerHTML = `
-                    <td><input type="checkbox" class="checkbox row-check" data-id="${r.id}" ${selectedIds.has(r.id) ? 'checked' : ''}></td>
+                    <td><input type="checkbox" class="checkbox row-check" data-id="${attrEscape(String(r.id ?? ''))}" ${selectedIds.has(r.id) ? 'checked' : ''}></td>
                     <td>${highlight(r.name || '', query)}</td>
                     <td>${highlight(r.email || '', query)}</td>
                     <td>${sanitize(r.role || '')}</td>

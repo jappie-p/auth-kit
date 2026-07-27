@@ -174,6 +174,23 @@
             return div.innerHTML;
         }
 
+        // Escape for use inside a quoted HTML attribute (sanitize() alone doesn't cover quotes)
+        function attrEscape(str) {
+            return sanitize(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // Only follow http(s) URLs — blocks javascript: and other script-executing schemes
+        function safeNavigate(url) {
+            try {
+                const parsed = new URL(url, window.location.origin);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    window.location.href = parsed.href;
+                }
+            } catch {
+                // ignore invalid URLs
+            }
+        }
+
         // Highlight match
         function highlight(text, query) {
             const safe = sanitize(text);
@@ -195,7 +212,7 @@
 
             let html = '';
             results.forEach((r, i) => {
-                html += `<div class="result-item" data-index="${i}" data-url="${sanitize(r.url || '')}">
+                html += `<div class="result-item" data-index="${i}" data-url="${attrEscape(r.url || '')}">
                     <div class="title">${highlight(r.title || '', query)}</div>
                     ${r.description ? `<div class="desc">${sanitize(r.description)}</div>` : ''}
                 </div>`;
@@ -212,7 +229,7 @@
             resultsEl.querySelectorAll('.result-item').forEach(el => {
                 el.addEventListener('click', () => {
                     const url = el.dataset.url;
-                    if (url) window.location.href = url;
+                    if (url) safeNavigate(url);
                 });
             });
         }

@@ -218,11 +218,18 @@
         const API_BASE = '/api';
         const REDIRECT = '/dashboard';
 
-        // Safe redirect from ?redirect= param
+        // Safe redirect from ?redirect= param — resolve and require same-origin
+        function safeRedirect(raw, fallback) {
+            try {
+                const url = new URL(raw, window.location.origin);
+                if (url.origin !== window.location.origin) return fallback;
+                return url.pathname + url.search + url.hash;
+            } catch {
+                return fallback;
+            }
+        }
         const urlParams = new URLSearchParams(window.location.search);
-        const rawRedirect = urlParams.get('redirect') || REDIRECT;
-        const redirectTo = (rawRedirect.includes('://') || rawRedirect.startsWith('//'))
-            ? REDIRECT : rawRedirect;
+        const redirectTo = safeRedirect(urlParams.get('redirect') || REDIRECT, REDIRECT);
 
         const loginForm = document.getElementById('loginForm');
         const loginError = document.getElementById('loginError');

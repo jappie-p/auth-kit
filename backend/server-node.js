@@ -6,10 +6,26 @@
  *
  * This is a MOCK server with fake data so you can preview all templates.
  * Replace the mock logic with real database calls for production.
+ *
+ * NOT IMPLEMENTED — add these before this touches real users:
+ *  - Sessions: login never sets a cookie/token, and no route checks one.
+ *    Every "authenticated" endpoint below (profile, sessions, 2FA,
+ *    delete-account, team management, etc.) is reachable by anyone.
+ *  - Password hashing: passwords are compared in plaintext. Use
+ *    bcrypt/argon2 and compare against a stored hash.
+ *  - Password reset: reset-password accepts any new_password with no
+ *    token check. Require a single-use, expiring, CSPRNG reset_token
+ *    bound to the user who requested it.
+ *  - Email verification / invite codes: verify-email and register
+ *    accept anything unconditionally — the tier-3/4 gates described in
+ *    SPEC.md are not enforced here.
+ *  - 2FA binding: verify-2fa isn't tied to a prior login (no temp_token
+ *    check), so it doesn't actually gate anything.
  */
 
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const app = express();
 const PORT = 3000;
 
@@ -65,8 +81,11 @@ app.post('/api/auth/verify-2fa', (req, res) => {
 app.post('/api/hq/login', (req, res) => {
     const { username, password, totpCode } = req.body;
     const user = USERS.find(u => u.username === username && u.password === password);
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
-    if (totpCode !== '123456') return res.status(401).json({ error: 'Invalid 2FA code' });
+    // Check both factors before responding — a distinct "invalid 2FA code" message
+    // for a correct password would let an attacker confirm valid credentials.
+    if (!user || totpCode !== '123456') {
+        return res.status(401).json({ error: 'Invalid credentials' });
+    }
     res.json({ user: { id: user.id, username: user.username } });
 });
 
@@ -217,7 +236,7 @@ app.post('/api/team/members/remove', (req, res) => {
 // ─── Support ───
 
 app.post('/api/support/ticket', (req, res) => {
-    res.json({ message: 'Ticket created', ticket_id: 'TK-' + Math.random().toString(36).slice(2, 8).toUpperCase() });
+    res.json({ message: 'Ticket created', ticket_id: 'TK-' + crypto.randomBytes(4).toString('hex').toUpperCase() });
 });
 
 // ─── Onboarding ───
@@ -249,7 +268,8 @@ app.post('/api/auth/confirm-2fa', (req, res) => {
 
 app.post('/api/auth/verify-reset-2fa', (req, res) => {
     const { code, backup_code } = req.body;
-    if (code === '123456' || backup_code) {
+    const MOCK_BACKUP_CODES = ['ABCD1234', 'EFGH5678', 'IJKL9012', 'MNOP3456', 'QRST7890', 'UVWX1234'];
+    if (code === '123456' || MOCK_BACKUP_CODES.includes(backup_code)) {
         res.json({ reset_token: 'mock_reset_token_2fa' });
     } else {
         res.status(401).json({ error: 'Invalid code' });

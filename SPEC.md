@@ -39,7 +39,7 @@ IF superadmin OR infrastructure OR owner_only OR compliance → Tier 4 (Super)
   - account_lockout: handles HTTP 423 (permanent and temporary)
   - cooldown: growing delay between fails (1s → 5s)
   - password_strength: visual bar (length, upper, lower, digit, special)
-  - safe_redirect: blocks `://` and `//` in `?redirect=` param
+  - safe_redirect: resolves `?redirect=` against `location.origin` via the `URL` constructor and requires an exact origin match, falling back to `REDIRECT` otherwise
 
 #### tier-3-strong
 - path: `3-strong.html`
@@ -543,6 +543,13 @@ When integrating a template:
    - 423: account locked (`{ permanent: bool, retry_after: seconds }`)
    - 428: challenge required (`{ challenge: string }`) — strong login only
    - 429: rate limited (`{ retry_after: seconds }`)
+7. Hash passwords (bcrypt/argon2) — never store or compare plaintext
+8. Make password reset, email verification, and 2FA setup tokens single-use,
+   expiring, CSPRNG-generated, and bound to the specific user who requested them
+9. Enforce the tier-3/4 gates server-side (invite codes, email verification,
+   2FA before password reset) — the reference `backend/` servers are mocks that
+   accept these unconditionally; see the NOT IMPLEMENTED note at the top of
+   each one
 
 ## Design Constants
 
