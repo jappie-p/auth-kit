@@ -7,6 +7,21 @@ Open:  http://localhost:3000
 Uses only Python standard library — no pip, no Flask, no Django.
 Works anywhere Python 3.6+ is installed (school servers, Raspberry Pi, etc.)
 This is a MOCK server. Replace with real DB for production.
+
+NOT IMPLEMENTED — add these before this touches real users:
+ - Sessions: login never sets a cookie/token, and no route checks one.
+   Every "authenticated" endpoint below (profile, sessions, 2FA,
+   delete-account, team management, etc.) is reachable by anyone.
+ - Password hashing: passwords are compared in plaintext. Use
+   bcrypt/argon2 (via a package) and compare against a stored hash.
+ - Password reset: reset-password accepts any new_password with no
+   token check. Require a single-use, expiring, CSPRNG reset_token
+   bound to the user who requested it.
+ - Email verification / invite codes: verify-email and register
+   accept anything unconditionally — the tier-3/4 gates described in
+   SPEC.md are not enforced here.
+ - 2FA binding: verify-2fa isn't tied to a prior login (no temp_token
+   check), so it doesn't actually gate anything.
 """
 
 import json
@@ -99,10 +114,10 @@ class AuthKitHandler(SimpleHTTPRequestHandler):
 
         if path == "/api/hq/login":
             user = next((u for u in USERS if u["username"] == body.get("username") and u["password"] == body.get("password")), None)
-            if not user:
+            # Check both factors before responding — a distinct "invalid 2FA code" message
+            # for a correct password would let an attacker confirm valid credentials.
+            if not user or body.get("totpCode") != "123456":
                 return self.json_response({"error": "Invalid credentials"}, 401)
-            if body.get("totpCode") != "123456":
-                return self.json_response({"error": "Invalid 2FA code"}, 401)
             return self.json_response({"user": {"id": user["id"], "username": user["username"]}})
 
         if path == "/api/auth/register":
@@ -163,7 +178,8 @@ class AuthKitHandler(SimpleHTTPRequestHandler):
             return self.json_response({"error": "Invalid code"}, 400)
 
         if path == "/api/auth/verify-reset-2fa":
-            if body.get("code") == "123456" or body.get("backup_code"):
+            mock_backup_codes = ["ABCD1234", "EFGH5678", "IJKL9012", "MNOP3456", "QRST7890", "UVWX1234"]
+            if body.get("code") == "123456" or body.get("backup_code") in mock_backup_codes:
                 return self.json_response({"reset_token": "mock_reset_token_2fa"})
             return self.json_response({"error": "Invalid code"}, 401)
 
@@ -218,7 +234,6 @@ class AuthKitHandler(SimpleHTTPRequestHandler):
     def json_response(self, data, code=200):
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 

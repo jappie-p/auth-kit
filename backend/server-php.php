@@ -7,6 +7,21 @@
  *
  * Works on ANY server with PHP 7+ (school servers, shared hosting, XAMPP, etc.)
  * This is a MOCK server. Replace with real DB queries for production.
+ *
+ * NOT IMPLEMENTED — add these before this touches real users:
+ *  - Sessions: login never sets a cookie/token, and no route checks one.
+ *    Every "authenticated" endpoint below (profile, sessions, 2FA,
+ *    delete-account, team management, etc.) is reachable by anyone.
+ *  - Password hashing: passwords are compared in plaintext. Use
+ *    password_hash()/password_verify() against a stored hash.
+ *  - Password reset: reset-password accepts any new_password with no
+ *    token check. Require a single-use, expiring, CSPRNG reset_token
+ *    bound to the user who requested it.
+ *  - Email verification / invite codes: verify-email and register
+ *    accept anything unconditionally — the tier-3/4 gates described in
+ *    SPEC.md are not enforced here.
+ *  - 2FA binding: verify-2fa isn't tied to a prior login (no temp_token
+ *    check), so it doesn't actually gate anything.
  */
 
 // ─── Config ───
@@ -63,11 +78,11 @@ if ($method === 'POST' && $uri === '/api/hq/login') {
     $password = $body['password'] ?? '';
     $totp = $body['totpCode'] ?? '';
 
-    foreach ($USERS as $u) {
-        if ($u['username'] === $username && $u['password'] === $password) {
-            if ($totp !== '123456') json_out(['error' => 'Invalid 2FA code'], 401);
-            json_out(['user' => ['id' => $u['id'], 'username' => $u['username']]]);
-        }
+    // Check both factors before responding — a distinct "invalid 2FA code" message
+    // for a correct password would let an attacker confirm valid credentials.
+    $matched = find_user($USERS, 'username', $username);
+    if ($matched && $matched['password'] === $password && $totp === '123456') {
+        json_out(['user' => ['id' => $matched['id'], 'username' => $matched['username']]]);
     }
     json_out(['error' => 'Invalid credentials'], 401);
 }
@@ -223,7 +238,7 @@ if ($method === 'POST' && $uri === '/api/team/members/remove') {
 // ─── Support ───
 
 if ($method === 'POST' && $uri === '/api/support/ticket') {
-    json_out(['message' => 'Ticket created', 'ticket_id' => 'TK-' . strtoupper(substr(md5(rand()), 0, 6))]);
+    json_out(['message' => 'Ticket created', 'ticket_id' => 'TK-' . strtoupper(bin2hex(random_bytes(4)))]);
 }
 
 // ─── Onboarding ───
@@ -253,7 +268,8 @@ if ($method === 'POST' && $uri === '/api/auth/confirm-2fa') {
 if ($method === 'POST' && $uri === '/api/auth/verify-reset-2fa') {
     $code = $body['code'] ?? '';
     $backup = $body['backup_code'] ?? '';
-    if ($code === '123456' || $backup) json_out(['reset_token' => 'mock_reset_token_2fa']);
+    $mockBackupCodes = ['ABCD1234', 'EFGH5678', 'IJKL9012', 'MNOP3456', 'QRST7890', 'UVWX1234'];
+    if ($code === '123456' || in_array($backup, $mockBackupCodes, true)) json_out(['reset_token' => 'mock_reset_token_2fa']);
     json_out(['error' => 'Invalid code'], 401);
 }
 
@@ -336,14 +352,19 @@ if ($method === 'POST' && $uri === '/api/waitlist') {
 
 // ─── Static files fallback ───
 
-// If no API route matched, serve static files
-$file = $ROOT . $uri;
-if ($uri === '/') $file = $ROOT . '/index.html';
+// If no API route matched, serve static files.
+// Two independent checks: realpath() containment blocks path traversal
+// (../, symlinks) outside $ROOT, and the extension allowlist blocks
+// serving this script's own source or any other unlisted file type.
+$requestedPath = $uri === '/' ? '/index.html' : $uri;
+$file = realpath($ROOT . $requestedPath);
+$rootReal = realpath($ROOT);
 
-if (is_file($file)) {
-    $ext = pathinfo($file, PATHINFO_EXTENSION);
-    $types = ['html' => 'text/html', 'css' => 'text/css', 'js' => 'application/javascript', 'json' => 'application/json', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'svg' => 'image/svg+xml'];
-    header('Content-Type: ' . ($types[$ext] ?? 'application/octet-stream'));
+$types = ['html' => 'text/html', 'css' => 'text/css', 'js' => 'application/javascript', 'json' => 'application/json', 'png' => 'image/png', 'jpg' => 'image/jpeg', 'svg' => 'image/svg+xml'];
+$ext = pathinfo($requestedPath, PATHINFO_EXTENSION);
+
+if ($file !== false && $rootReal !== false && strpos($file, $rootReal . DIRECTORY_SEPARATOR) === 0 && is_file($file) && isset($types[$ext])) {
+    header('Content-Type: ' . $types[$ext]);
     readfile($file);
     exit;
 }

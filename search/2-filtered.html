@@ -332,6 +332,18 @@
             return safe.replace(regex, '<mark>$1</mark>');
         }
 
+        // Only follow http(s) URLs — blocks javascript: and other script-executing schemes
+        function safeNavigate(url) {
+            try {
+                const parsed = new URL(url, window.location.origin);
+                if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    window.location.href = parsed.href;
+                }
+            } catch {
+                // ignore invalid URLs
+            }
+        }
+
         function timeAgo(dateStr) {
             if (!dateStr) return '';
             const diff = Date.now() - new Date(dateStr).getTime();
@@ -389,7 +401,7 @@
                 `;
 
                 card.addEventListener('click', () => {
-                    if (r.url) window.location.href = r.url;
+                    if (r.url) safeNavigate(r.url);
                 });
 
                 resultsEl.appendChild(card);
